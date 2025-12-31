@@ -14,6 +14,7 @@ import UniformTypeIdentifiers
 /// Settings section navigation
 public enum SettingsSection: String, CaseIterable, Identifiable {
     case backup = "Backup & Restore"
+    case features = "Features"
     case integrations = "Integrations"
     case about = "About"
     
@@ -22,6 +23,7 @@ public enum SettingsSection: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .backup: return "externaldrive"
+        case .features: return "sparkles"
         case .integrations: return "puzzlepiece.extension"
         case .about: return "info.circle"
         }
@@ -30,6 +32,7 @@ public enum SettingsSection: String, CaseIterable, Identifiable {
     var color: Color {
         switch self {
         case .backup: return CyberpunkTheme.accentCyan
+        case .features: return CyberpunkTheme.accentYellow
         case .integrations: return CyberpunkTheme.accentMagenta
         case .about: return CyberpunkTheme.accentPurple
         }
@@ -70,6 +73,8 @@ public struct BackupRestoreView: View {
                     switch selectedSection {
                     case .backup:
                         backupContent
+                    case .features:
+                        featuresContent
                     case .integrations:
                         integrationsContent
                     case .about:
@@ -158,6 +163,56 @@ public struct BackupRestoreView: View {
             
             // Backup list
             backupListSection
+        }
+    }
+    
+    // MARK: - Features Content
+    
+    private var featuresContent: some View {
+        VStack(alignment: .leading, spacing: CyberpunkTheme.spacingL) {
+            // Section header
+            HStack {
+                Image(systemName: "sparkles")
+                    .foregroundColor(CyberpunkTheme.accentYellow)
+                    .font(.system(size: 20))
+                Text("Features")
+                    .font(CyberpunkTheme.fontTitle)
+                    .foregroundColor(CyberpunkTheme.textPrimary)
+            }
+            
+            Text("Enable or disable optional features in TaskFlow.")
+                .font(CyberpunkTheme.fontCaption)
+                .foregroundColor(CyberpunkTheme.textSecondary)
+            
+            // Annual Calendar toggle
+            NeonCard(color: CyberpunkTheme.accentYellow) {
+                VStack(alignment: .leading, spacing: CyberpunkTheme.spacingM) {
+                    HStack {
+                        Image(systemName: "calendar")
+                            .foregroundColor(CyberpunkTheme.accentYellow)
+                            .font(.system(size: 16))
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Annual Calendar")
+                                .font(CyberpunkTheme.fontHeadline)
+                                .foregroundColor(CyberpunkTheme.textPrimary)
+                            
+                            Text("View your entire year at a glance with event blocks and task activity indicators.")
+                                .font(CyberpunkTheme.fontCaption)
+                                .foregroundColor(CyberpunkTheme.textSecondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Toggle("", isOn: Binding(
+                            get: { SettingsManager.shared.showAnnualCalendar },
+                            set: { SettingsManager.shared.showAnnualCalendar = $0 }
+                        ))
+                        .toggleStyle(.switch)
+                        .tint(CyberpunkTheme.accentYellow)
+                    }
+                }
+            }
         }
     }
     

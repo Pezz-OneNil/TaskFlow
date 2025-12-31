@@ -16,6 +16,7 @@ public final class SettingsManager: ObservableObject {
         static let outlookIntegrationEnabled = "outlookIntegrationEnabled"
         static let emailDropEnabled = "emailDropEnabled"
         static let emailAutoCreateTasks = "emailAutoCreateTasks"
+        static let showAnnualCalendar = "showAnnualCalendar"
     }
     
     /// Currently selected Ollama model
@@ -62,6 +63,16 @@ public final class SettingsManager: ObservableObject {
         }
     }
     
+    /// Whether to show the Annual Calendar tab
+    /// Feature: annual-calendar
+    /// Per Requirement 1.4
+    @Published public var showAnnualCalendar: Bool {
+        didSet {
+            defaults.set(showAnnualCalendar, forKey: Keys.showAnnualCalendar)
+            print("SettingsManager: Annual Calendar \(showAnnualCalendar ? "enabled" : "disabled")")
+        }
+    }
+    
     private init() {
         // Load Outlook integration setting (legacy)
         outlookIntegrationEnabled = defaults.bool(forKey: Keys.outlookIntegrationEnabled)
@@ -77,11 +88,15 @@ public final class SettingsManager: ObservableObject {
         // Auto-create defaults to false (show dialog for review)
         emailAutoCreateTasks = defaults.bool(forKey: Keys.emailAutoCreateTasks)
         
+        // Annual Calendar defaults to false (hidden initially)
+        showAnnualCalendar = defaults.bool(forKey: Keys.showAnnualCalendar)
+        
         // Load saved model
         selectedModel = defaults.string(forKey: Keys.selectedModel)
         print("SettingsManager: Loaded selected model: \(selectedModel ?? "none")")
         print("SettingsManager: Email drop enabled: \(emailDropEnabled)")
         print("SettingsManager: Email auto-create: \(emailAutoCreateTasks)")
+        print("SettingsManager: Annual Calendar: \(showAnnualCalendar)")
     }
     
     /// Update available models list

@@ -263,4 +263,46 @@ public final class TaskManager: TaskManagerProtocol, ObservableObject {
     public func reloadTasks() {
         loadTasks()
     }
+    
+    // MARK: - Activity Stats (Annual Calendar)
+    
+    /// Get task activity statistics for a given year
+    /// Returns a dictionary mapping dates to TaskActivityStats
+    /// Per Requirements 6.1, 6.2
+    public func getActivityStats(for year: Int) -> [Date: TaskActivityStats] {
+        let calendar = Calendar.current
+        var stats: [Date: TaskActivityStats] = [:]
+        
+        // Track counts per day
+        var addedCounts: [Date: Int] = [:]
+        var completedCounts: [Date: Int] = [:]
+        
+        for task in tasks {
+            // Count tasks added (by createdAt date)
+            let createdComponents = calendar.dateComponents([.year, .month, .day], from: task.createdAt)
+            if createdComponents.year == year,
+               let normalizedCreated = calendar.date(from: createdComponents) {
+                addedCounts[normalizedCreated, default: 0] += 1
+            }
+            
+            // Count tasks completed (by updatedAt date when status is completed)
+            if task.status == .completed {
+                let updatedComponents = calendar.dateComponents([.year, .month, .day], from: task.updatedAt)
+                if updatedComponents.year == year,
+                   let normalizedUpdated = calendar.date(from: updatedComponents) {
+                    completedCounts[normalizedUpdated, default: 0] += 1
+                }
+            }
+        }
+        
+        // Combine into TaskActivityStats
+        let allDates = Set(addedCounts.keys).union(Set(completedCounts.keys))
+        for date in allDates {
+            let added = addedCounts[date] ?? 0
+            let completed = completedCounts[date] ?? 0
+            stats[date] = TaskActivityStats(date: date, tasksAdded: added, tasksCompleted: completed)
+        }
+        
+        return stats
+    }
 }
