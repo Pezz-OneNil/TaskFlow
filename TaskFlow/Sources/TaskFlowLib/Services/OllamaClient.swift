@@ -25,12 +25,30 @@ public final class OllamaClient {
     private let baseURL: URL
     private let session: URLSession
     private let timeout: TimeInterval
+    private let allowedHosts: Set<String> = ["localhost", "127.0.0.1", "::1"]
     
     public init(
         baseURL: URL = URL(string: "http://localhost:11434")!,
-        timeout: TimeInterval = 30
+        timeout: TimeInterval = 30,
+        allowNonLocal: Bool = false
     ) {
-        self.baseURL = baseURL
+        if allowNonLocal {
+            if let scheme = baseURL.scheme,
+               ["http", "https"].contains(scheme) {
+                self.baseURL = baseURL
+            } else {
+                print("OllamaClient: Invalid base URL scheme, defaulting to localhost")
+                self.baseURL = URL(string: "http://localhost:11434")!
+            }
+        } else if let host = baseURL.host,
+                  allowedHosts.contains(host),
+                  let scheme = baseURL.scheme,
+                  ["http", "https"].contains(scheme) {
+            self.baseURL = baseURL
+        } else {
+            print("OllamaClient: Invalid base URL, defaulting to localhost")
+            self.baseURL = URL(string: "http://localhost:11434")!
+        }
         self.timeout = timeout
         
         let config = URLSessionConfiguration.default

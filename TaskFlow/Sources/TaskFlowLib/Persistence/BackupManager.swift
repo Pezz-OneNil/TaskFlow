@@ -62,6 +62,9 @@ public final class BackupManager: ObservableObject {
     /// Retention policy constants
     private let maxManualBackups = 5
     private let maxDailyBackupDays = 14
+    private let maxTasksJsonSize = 50 * 1024 * 1024
+    private let maxManifestSize = 2 * 1024 * 1024
+    private let maxScreenshotSize = 150 * 1024 * 1024
     
     /// Published state for UI
     @Published public var isCreatingBackup = false
@@ -376,6 +379,8 @@ public final class BackupManager: ObservableObject {
             var isDir: ObjCBool = false
             return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) && isDir.boolValue
         } ?? tempDir
+
+        try validateExtractedBackup(at: extractedDir)
         
         // Read tasks.json
         let tasksJsonUrl = extractedDir.appendingPathComponent("tasks.json")
@@ -611,6 +616,79 @@ public final class BackupManager: ObservableObject {
         }
         
         refreshBackupList()
+    }
+
+    private func validateExtractedBackup(at extractedDir: URL) throws {
+        let allowedTopLevelNames: Set<String> = ["tasks.json", "manifest.json", "screenshots"]
+        let contents = try FileManager.default.contentsOfDirectory(
+            at: extractedDir,
+            includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+            options: [.skipsHiddenFiles]
+        )
+        let topLevelNames = Set(contents.map { $0.lastPathComponent })
+
+        guard topLevelNames.contains("tasks.json") else {
+            throw DatabaseError.restoreFailed("Backup archive missing tasks.json")
+        }
+
+        guard topLevelNames.contains("manifest.json") else {
+            throw DatabaseError.restoreFailed("Backup archive missing manifest.json")
+        }
+
+        for url in contents {
+            let name = url.lastPathComponent
+            guard allowedTopLevelNames.contains(name) else {
+                throw DatabaseError.restoreFailed("Unexpected file in backup: \(name)")
+            }
+
+            let resourceValues = try url.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
+            if name == "tasks.json" {
+                if resourceValues.isDirectory == true {
+                    throw DatabaseError.restoreFailed("Backup tasks.json is a directory")
+                }
+                let size = resourceValues.fileSize ?? 0
+                if size > maxTasksJsonSize {
+                    throw DatabaseError.restoreFailed("Backup tasks.json is too large")
+                }
+            } else if name == "manifest.json" {
+                if resourceValues.isDirectory == true {
+                    throw DatabaseError.restoreFailed("Backup manifest.json is a directory")
+                }
+                let size = resourceValues.fileSize ?? 0
+                if size > maxManifestSize {
+                    throw DatabaseError.restoreFailed("Backup manifest.json is too large")
+                }
+            } else if name == "screenshots" {
+                if resourceValues.isDirectory != true {
+                    throw DatabaseError.restoreFailed("Backup screenshots path is not a directory")
+                }
+                try validateScreenshotsDirectory(url)
+            }
+        }
+    }
+
+    private func validateScreenshotsDirectory(_ directory: URL) throws {
+        let contents = try FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+            options: [.skipsHiddenFiles]
+        )
+
+        for url in contents {
+            let resourceValues = try url.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
+            if resourceValues.isDirectory == true {
+                throw DatabaseError.restoreFailed("Nested directories are not allowed in screenshots")
+            }
+
+            guard url.pathExtension.lowercased() == "png" else {
+                throw DatabaseError.restoreFailed("Unexpected screenshot file type: \(url.lastPathComponent)")
+            }
+
+            let size = resourceValues.fileSize ?? 0
+            if size > maxScreenshotSize {
+                throw DatabaseError.restoreFailed("Screenshot file too large: \(url.lastPathComponent)")
+            }
+        }
     }
 }
 
