@@ -1,8 +1,8 @@
-# Implementation Plan: Task Flow App
+# Implementation Plan: TaskFlow App
 
 ## Overview
 
-This implementation plan documents the Task Flow macOS application development. The app provides intelligent screen capture across multiple monitors, task management, Pomodoro timing, and Kanban organization with local LLM integration via Ollama.
+This implementation plan documents the TaskFlow macOS application development. The app provides intelligent screen capture across multiple monitors, task management, Pomodoro timing, and Kanban organization with local LLM integration via Ollama.
 
 ## Completed Tasks
 
@@ -308,6 +308,10 @@ All features implemented and working including:
 - Backup retention policy: 5 manual, 14 daily, unlimited pre-migration
 - Daily automatic backups for data safety
 - Screenshot persistence fix - screenshots now properly saved before task creation (v1.0.5)
+- Restored tasks now return to active list (kanbanColumn = nil) instead of staying on Kanban
+- Test suite fully passing (32 tests) with accurate documentation and meaningful coverage
+- Email drag-and-drop for task creation with furtherDetails populated from email body
+- "How to Use TaskFlow" guidance in About tab
 
 ### Phase 13: Model Standardization (Complete)
 
@@ -473,6 +477,40 @@ All features implemented and working including:
   - Incremented version in AppInfo.swift
   - Created TaskFlow-Installer-1.0.5.dmg
   - _Requirements: Distribution_
+
+### Phase 18: Bug Fixes and Test Improvements (Complete)
+
+- [x] 102. Fix restored tasks not returning to active list
+  - Changed restoreFromDeleted() to set kanbanColumn = nil instead of .backlog
+  - Restored tasks now re-enter the active task list and Pomodoro prioritization
+  - Previously, restored tasks remained on Kanban board and were excluded from active filtering
+  - _Requirements: 4.5, 5.1_
+
+- [x] 103. Fix TimeEstimate documentation discrepancy in tests
+  - Updated TaskFieldBoundsTests.swift docstring from [15, 30, 45, 60, 90] to [10, 20, 40, 60, 90]
+  - Updated expected values to match actual TimeEstimate enum
+  - Updated TestRunner Property 4 docstring and expected values
+  - _Requirements: 3.1, Documentation consistency_
+
+- [x] 104. Replace placeholder test with meaningful tests
+  - Removed trivial `#expect(true)` assertion from TaskFlowTests.swift
+  - Added PriorityScheduler ordering test (verifies high priority before low)
+  - Added Task default values test (verifies priority, timeEstimate, kanbanColumn defaults)
+  - Converted from Swift Testing to XCTest framework for consistency
+  - _Requirements: Test coverage_
+
+- [x] 105. Fix branding consistency in spec documents
+  - Changed "Task Flow" to "TaskFlow" in requirements.md
+  - Changed "Task Flow" to "TaskFlow" in design.md
+  - Changed "Task Flow" to "TaskFlow" in tasks.md
+  - _Requirements: Branding consistency_
+
+- [x] 106. Update TestRunner tests for Pomodoro/restore behavior
+  - Fixed Property 7 test to move tasks to Kanban backlog before starting Pomodoro
+  - Pomodoro pulls from Kanban columns, not active task list
+  - Fixed Integration tests to expect kanbanColumn = nil after restore instead of .backlog
+  - All 32 tests now pass
+  - _Requirements: 4.5, 5.1, Test accuracy_
 
 ## Build Commands
 

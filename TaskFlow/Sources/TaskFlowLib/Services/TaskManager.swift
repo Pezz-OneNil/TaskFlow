@@ -216,11 +216,12 @@ public final class TaskManager: TaskManagerProtocol, ObservableObject {
         updateTask(updatedTask)
     }
     
-    /// Restore a task from deleted state (returns to active list without a Kanban column)
+    /// Restore a task from deleted state
+    /// Returns task to active list (not Kanban) so it appears in Pomodoro prioritization
     public func restoreFromDeleted(_ task: Task) {
         var updatedTask = task
         updatedTask.status = .pending
-        updatedTask.kanbanColumn = nil
+        updatedTask.kanbanColumn = nil  // Clear kanban column to return to active list
         updatedTask.updatedAt = Date()
         updateTask(updatedTask)
     }

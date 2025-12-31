@@ -1,8 +1,8 @@
-# Design Document: Task Flow App
+# Design Document: TaskFlow App
 
 ## Overview
 
-Task Flow is a native macOS application built using Swift and SwiftUI, providing a modern, performant productivity tool. The application uses a layered architecture with clear separation between UI, business logic, and data persistence. Core data is stored locally using SQLite with automatic backup mechanisms to ensure data integrity across reboots and unexpected shutdowns.
+TaskFlow is a native macOS application built using Swift and SwiftUI, providing a modern, performant productivity tool. The application uses a layered architecture with clear separation between UI, business logic, and data persistence. Core data is stored locally using SQLite with automatic backup mechanisms to ensure data integrity across reboots and unexpected shutdowns.
 
 The application leverages macOS native APIs for screen capture (CGWindowListCreateImage for multi-monitor support), text extraction (Vision framework for OCR), and system integration. It integrates with local Ollama LLM models for intelligent task title generation, ensuring complete privacy with no internet connectivity required. The UI follows a cyberpunk aesthetic with a dark theme, neon purple accents, and subtle glow effects.
 

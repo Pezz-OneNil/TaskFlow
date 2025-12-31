@@ -10,7 +10,7 @@
 set -e
 
 # Version and Copyright
-APP_VERSION="1.0.4"
+APP_VERSION="1.1.0"
 COPYRIGHT="© 2025 Pezz. All rights reserved."
 
 # Colors for output

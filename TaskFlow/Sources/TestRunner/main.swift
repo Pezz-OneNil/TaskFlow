@@ -41,7 +41,7 @@ func createTestImageWithText(_ text: String, width: Int = 400, height: Int = 100
 }
 
 /// **Feature: task-flow-app, Property 4: Task Field Bounds**
-/// *For any* task, the timeEstimate SHALL be one of (15, 30, 45, 60, 90) minutes
+/// *For any* task, the timeEstimate SHALL be one of (10, 20, 40, 60, 90) minutes
 /// AND the priority SHALL be one of (low=1, medium=2, mega=3).
 /// **Validates: Requirements 3.1, 3.2**
 
@@ -409,7 +409,7 @@ do {
             // Create multiple tasks with different priorities
             var createdTasks: [Task] = []
             
-            // Create 3-5 tasks
+            // Create 3-5 tasks and move them to Kanban backlog (Pomodoro pulls from Kanban)
             let taskCount = Int.random(in: 3...5)
             for _ in 0..<taskCount {
                 let task = taskManager.createTask(
@@ -419,6 +419,8 @@ do {
                     priority: TaskGenerators.randomPriority()
                 )
                 createdTasks.append(task)
+                // Move to Kanban backlog so Pomodoro can see them
+                taskManager.moveToKanban(task, column: .backlog)
             }
             
             // Create Pomodoro engine
@@ -782,7 +784,7 @@ do {
     // Integration Test: Pomodoro session with task progression
     allTests.append {
         PropertyTest.check("Integration: Pomodoro session with task progression", iterations: 10) {
-            // Create tasks
+            // Create tasks and move them to Kanban backlog (Pomodoro pulls from Kanban)
             var createdTasks: [Task] = []
             for i in 0..<3 {
                 let task = taskManager.createTask(
@@ -792,6 +794,8 @@ do {
                     priority: i == 0 ? .mega : (i == 1 ? .medium : .low)
                 )
                 createdTasks.append(task)
+                // Move to Kanban backlog so Pomodoro can see them
+                taskManager.moveToKanban(task, column: .backlog)
             }
             
             // Create engine and start session
@@ -885,27 +889,30 @@ do {
             let completedCorrectly = updated.status == .completed && updated.kanbanColumn == .done
             let notInActiveAfterComplete = !taskManager.getActiveTasks().contains { $0.id == task.id }
             
-            // Restore from done (move back to backlog)
+            // Restore from done - should return to active list (kanbanColumn = nil)
             taskManager.restoreFromDeleted(updated)
             updated = taskManager.getAllTasks().first { $0.id == task.id }!
-            let restoredToBacklog = updated.kanbanColumn == .backlog && updated.status == .pending
+            let restoredToActive = updated.kanbanColumn == nil && updated.status == .pending
+            let inActiveAfterRestore = taskManager.getActiveTasks().contains { $0.id == updated.id }
             
             // Soft delete
             taskManager.softDeleteTask(updated)
             updated = taskManager.getAllTasks().first { $0.id == task.id }!
             let softDeletedCorrectly = updated.status == .deleted && updated.kanbanColumn == .deleted
             
-            // Restore from deleted
+            // Restore from deleted - should return to active list (kanbanColumn = nil)
             taskManager.restoreFromDeleted(updated)
             updated = taskManager.getAllTasks().first { $0.id == task.id }!
-            let restoredFromDeleted = updated.status == .pending && updated.kanbanColumn == .backlog
+            let restoredFromDeleted = updated.status == .pending && updated.kanbanColumn == nil
+            let inActiveAfterDeleteRestore = taskManager.getActiveTasks().contains { $0.id == updated.id }
             
             // Permanent delete
             let permanentlyDeleted = taskManager.permanentlyDeleteTask(id: task.id)
             let noLongerExists = !taskManager.getAllTasks().contains { $0.id == task.id }
             
             return initiallyActive && completedCorrectly && notInActiveAfterComplete &&
-                   restoredToBacklog && softDeletedCorrectly && restoredFromDeleted &&
+                   restoredToActive && inActiveAfterRestore && softDeletedCorrectly && 
+                   restoredFromDeleted && inActiveAfterDeleteRestore &&
                    permanentlyDeleted && noLongerExists
         }
     }
@@ -932,19 +939,20 @@ do {
             let notInActive = !taskManager.getActiveTasks().contains { $0.id == task.id }
             let notInRegularKanban = !taskManager.getKanbanTasks().contains { $0.id == task.id }
             
-            // Restore
+            // Restore - should return to active list (kanbanColumn = nil)
             if let deletedTask = deletedTasks.first(where: { $0.id == task.id }) {
                 taskManager.restoreFromDeleted(deletedTask)
             }
             
-            // Verify restored to backlog
+            // Verify restored to active list (not Kanban)
             let updated = taskManager.getAllTasks().first { $0.id == task.id }!
-            let restoredToBacklog = updated.kanbanColumn == .backlog
+            let restoredToActive = updated.kanbanColumn == nil
+            let inActiveList = taskManager.getActiveTasks().contains { $0.id == task.id }
             
             // Clean up
             _ = taskManager.permanentlyDeleteTask(id: task.id)
             
-            return inDeletedColumn && notInActive && notInRegularKanban && restoredToBacklog
+            return inDeletedColumn && notInActive && notInRegularKanban && restoredToActive && inActiveList
         }
     }
     
@@ -1098,7 +1106,7 @@ print("Unit Checks")
 print("=" * 60)
 
 // Check TimeEstimate enum cases
-let expectedTimeValues: Set<Int> = [15, 30, 45, 60, 90]
+let expectedTimeValues: Set<Int> = [10, 20, 40, 60, 90]
 let actualTimeValues = Set(TimeEstimate.allCases.map { $0.rawValue })
 if expectedTimeValues == actualTimeValues {
     print("✅ TimeEstimate has correct cases: \(actualTimeValues)")

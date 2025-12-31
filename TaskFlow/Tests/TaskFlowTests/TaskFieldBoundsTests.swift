@@ -1,13 +1,12 @@
-import Testing
+import XCTest
 @testable import TaskFlowLib
 
 /// **Feature: task-flow-app, Property 4: Task Field Bounds**
 /// *For any* task, the timeEstimate SHALL be one of (10, 20, 40, 60, 90) minutes
 /// AND the priority SHALL be one of (low=1, medium=2, mega=3).
 /// **Validates: Requirements 3.1, 3.2**
-@Suite("Task Field Bounds Tests")
-struct TaskFieldBoundsTests {
-
+final class TaskFieldBoundsTests: XCTestCase {
+    
     private final class MockPersistenceManager: PersistenceManagerProtocol {
         private var storedTasks: [UUID: Task] = [:]
         
@@ -74,68 +73,65 @@ struct TaskFieldBoundsTests {
     // MARK: - Property Tests (100 iterations each)
     
     /// Property 4: Task Field Bounds - TimeEstimate values
-    @Test("TimeEstimate is valid enum value - 100 iterations")
-    func timeEstimateIsValidEnumValue() {
-        let validValues = Set(TimeEstimate.allCases.map(\.rawValue))
+    func testTimeEstimateIsValidEnumValue() {
+        let validValues: Set<Int> = [10, 20, 40, 60, 90]
         
         for _ in 1...100 {
             let task = randomTask()
-            #expect(validValues.contains(task.timeEstimate.rawValue))
+            XCTAssertTrue(validValues.contains(task.timeEstimate.rawValue),
+                         "TimeEstimate \(task.timeEstimate.rawValue) is not valid")
         }
     }
     
     /// Property 4: Task Field Bounds - Priority values
-    @Test("Priority is valid enum value - 100 iterations")
-    func priorityIsValidEnumValue() {
+    func testPriorityIsValidEnumValue() {
         let validValues: Set<Int> = [1, 2, 3]
         
         for _ in 1...100 {
             let task = randomTask()
-            #expect(validValues.contains(task.priority.rawValue))
+            XCTAssertTrue(validValues.contains(task.priority.rawValue),
+                         "Priority \(task.priority.rawValue) is not valid")
         }
     }
     
     /// Combined property test for both bounds
-    @Test("Task field bounds property - 100 iterations")
-    func taskFieldBoundsProperty() {
-        let validTimeEstimates = Set(TimeEstimate.allCases.map(\.rawValue))
+    func testTaskFieldBoundsProperty() {
+        let validTimeEstimates: Set<Int> = [10, 20, 40, 60, 90]
         let validPriorities: Set<Int> = [1, 2, 3]
         
         for _ in 1...100 {
             let task = randomTask()
             let timeValid = validTimeEstimates.contains(task.timeEstimate.rawValue)
             let priorityValid = validPriorities.contains(task.priority.rawValue)
-            #expect(timeValid && priorityValid)
+            XCTAssertTrue(timeValid && priorityValid,
+                         "Task bounds invalid: time=\(task.timeEstimate.rawValue), priority=\(task.priority.rawValue)")
         }
     }
     
     // MARK: - Unit Tests
     
-    @Test("TimeEstimate has all expected cases")
-    func timeEstimateAllCases() {
-        let uniqueRawValues = Set(TimeEstimate.allCases.map(\.rawValue))
-        #expect(uniqueRawValues.count == TimeEstimate.allCases.count)
+    func testTimeEstimateHasAllExpectedCases() {
+        let expected: Set<Int> = [10, 20, 40, 60, 90]
+        let actual = Set(TimeEstimate.allCases.map { $0.rawValue })
+        XCTAssertEqual(expected, actual)
     }
     
-    @Test("Priority has all expected cases")
-    func priorityAllCases() {
+    func testPriorityHasAllExpectedCases() {
         let expected: Set<Int> = [1, 2, 3]
         let actual = Set(Priority.allCases.map { $0.rawValue })
-        #expect(expected == actual)
+        XCTAssertEqual(expected, actual)
     }
     
-    @Test("Priority ordering is correct")
-    func priorityOrdering() {
-        #expect(Priority.low < Priority.medium)
-        #expect(Priority.medium < Priority.mega)
+    func testPriorityOrderingIsCorrect() {
+        XCTAssertLessThan(Priority.low, Priority.medium)
+        XCTAssertLessThan(Priority.medium, Priority.mega)
     }
 
-    @Test("TaskManager defaults to 20 minutes and medium priority")
-    func taskManagerDefaultCreateTaskValues() {
+    func testTaskManagerDefaultCreateTaskValues() {
         let taskManager = TaskManager(persistenceManager: MockPersistenceManager())
         let task = taskManager.createTask(title: "Default Task")
         
-        #expect(task.timeEstimate == .twenty)
-        #expect(task.priority == .medium)
+        XCTAssertEqual(task.timeEstimate, .twenty)
+        XCTAssertEqual(task.priority, .medium)
     }
 }

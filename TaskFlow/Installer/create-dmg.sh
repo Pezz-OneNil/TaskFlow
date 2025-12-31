@@ -19,7 +19,7 @@ NC='\033[0m'
 # Configuration
 APP_NAME="TaskFlow"
 DMG_NAME="TaskFlow-Installer"
-VERSION="1.0.4"
+VERSION="1.1.0"
 COPYRIGHT="© 2025 Pezz. All rights reserved."
 VOLUME_NAME="TaskFlow Installer"
 
@@ -58,71 +58,173 @@ mkdir -p "$DMG_TEMP"
 echo -e "${CYAN}Copying files...${NC}"
 cp -R "$PROJECT_DIR/$APP_NAME.app" "$DMG_TEMP/"
 cp "$SCRIPT_DIR/install-taskflow.sh" "$DMG_TEMP/"
-cp "$SCRIPT_DIR/README.txt" "$DMG_TEMP/" 2>/dev/null || true
+
+# Create the combined installation guide with nice formatting
+cat > "$DMG_TEMP/📖 Installation Guide.txt" << 'EOF'
+
+
+    ████████╗ █████╗ ███████╗██╗  ██╗███████╗██╗      ██████╗ ██╗    ██╗
+    ╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝██╔════╝██║     ██╔═══██╗██║    ██║
+       ██║   ███████║███████╗█████╔╝ █████╗  ██║     ██║   ██║██║ █╗ ██║
+       ██║   ██╔══██║╚════██║██╔═██╗ ██╔══╝  ██║     ██║   ██║██║███╗██║
+       ██║   ██║  ██║███████║██║  ██╗██║     ███████╗╚██████╔╝╚███╔███╔╝
+       ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝
+
+                        ✨ Version 1.1.0 ✨
+                   © 2025 Pezz. All rights reserved.
+
+    ═══════════════════════════════════════════════════════════════════
+
+
+    ⚡ QUICK START (2 minutes)
+    ─────────────────────────────────────────────────────────────────
+
+        ┌─────────────────────────────────────────────────────────┐
+        │                                                         │
+        │   1️⃣   Drag TaskFlow.app ──→ Applications folder        │
+        │                                                         │
+        │   2️⃣   Right-click TaskFlow.app → Select "Open"         │
+        │                                                         │
+        │   3️⃣   Click "Open" in the security dialog              │
+        │                                                         │
+        │   ✅  Done! TaskFlow opens normally from now on.         │
+        │                                                         │
+        └─────────────────────────────────────────────────────────┘
+
+
+    ⚠️  MACOS SECURITY NOTE
+    ─────────────────────────────────────────────────────────────────
+
+    When you first open TaskFlow, macOS may display:
+
+        ╭──────────────────────────────────────────────────────╮
+        │  "Apple could not verify TaskFlow is free           │
+        │   of malware that may harm your Mac"                │
+        ╰──────────────────────────────────────────────────────╯
+
+    This is NORMAL for apps distributed outside the Mac App Store.
+    TaskFlow is completely safe! Use one of these methods to open it:
+
+
+        METHOD A: Right-Click (Recommended)
+        ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+        • Right-click (or Control+click) on TaskFlow.app
+        • Select "Open" from the context menu
+        • Click "Open" in the dialog
+
+
+        METHOD B: System Settings
+        ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+        • Open System Settings → Privacy & Security
+        • Scroll down to find the TaskFlow message
+        • Click "Open Anyway"
+
+
+        METHOD C: Terminal (Advanced)
+        ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+        • Open Terminal and run:
+          xattr -cr /Applications/TaskFlow.app
+
+
+    🚀 FULL INSTALLATION (with AI Features)
+    ─────────────────────────────────────────────────────────────────
+
+    For AI-powered task title generation, run the installer script:
+
+        ┌─────────────────────────────────────────────────────────┐
+        │                                                         │
+        │   1. Open Terminal (search "Terminal" in Spotlight)     │
+        │                                                         │
+        │   2. Drag "install-taskflow.sh" into Terminal window    │
+        │                                                         │
+        │   3. Press Enter and follow the prompts                 │
+        │                                                         │
+        └─────────────────────────────────────────────────────────┘
+
+    The installer will:
+        ✦ Install TaskFlow to /Applications
+        ✦ Install Ollama (local AI runtime)
+        ✦ Download the gemma3:1b model (~1.5GB)
+        ✦ Configure permissions
+
+
+    📋 REQUIREMENTS
+    ─────────────────────────────────────────────────────────────────
+
+        ╭────────────────────────────────────────────────────────╮
+        │  ◉ macOS 13 (Ventura) or later                        │
+        │  ◉ 5GB free disk space (for AI model)                 │
+        │  ◉ Apple Silicon (M1/M2/M3) or Intel Mac              │
+        ╰────────────────────────────────────────────────────────╯
+
+
+    🔐 PERMISSIONS NEEDED
+    ─────────────────────────────────────────────────────────────────
+
+        Screen Recording     →  For capturing task screenshots
+        Accessibility        →  For global keyboard shortcuts (optional)
+
+        Grant these in: System Settings → Privacy & Security
+
+
+    🎯 AFTER INSTALLATION
+    ─────────────────────────────────────────────────────────────────
+
+        1. Launch TaskFlow from Applications or Launchpad
+        2. Grant Screen Recording permission when prompted
+        3. Ensure Ollama is running (check menu bar)
+        4. Press ⌘⇧C to capture your first task!
+
+
+    🔧 TROUBLESHOOTING
+    ─────────────────────────────────────────────────────────────────
+
+        "TaskFlow can't be opened"
+        → Right-click → Open (see security note above)
+
+        "TaskFlow is damaged"
+        → Run: xattr -cr /Applications/TaskFlow.app
+
+        Screen capture not working
+        → Grant Screen Recording in System Settings
+        → Restart TaskFlow after granting
+
+        AI titles not generating
+        → Check Ollama is running (menu bar icon)
+        → Run: ollama serve
+
+        Model not found
+        → Run: ollama pull gemma3:1b
+
+
+    💡 FEATURES
+    ─────────────────────────────────────────────────────────────────
+
+        ✦ Kanban Board          Organize tasks visually
+        ✦ Screenshot Capture    Capture context with tasks
+        ✦ AI Task Titles        Auto-generate titles with local AI
+        ✦ Time Tracking         Built-in Pomodoro timer
+        ✦ 100% Offline          All data stays on your Mac
+        ✦ Multi-Select          Bulk delete with ⌘+Click
+        ✦ Outlook Integration   Capture emails as tasks (optional)
+
+
+    ═══════════════════════════════════════════════════════════════════
+
+                         Enjoy TaskFlow! 🚀
+
+                    Questions? Check the app's Help menu.
+
+    ═══════════════════════════════════════════════════════════════════
+
+
+EOF
+
+# Create Applications folder symlink for easy drag-and-drop
+ln -s /Applications "$DMG_TEMP/Applications"
 
 # Make installer executable
 chmod +x "$DMG_TEMP/install-taskflow.sh"
-
-# Create README if it doesn't exist
-if [ ! -f "$DMG_TEMP/README.txt" ]; then
-    cat > "$DMG_TEMP/README.txt" << 'EOF'
-╔══════════════════════════════════════════════════════════════╗
-║                    TaskFlow Installer                        ║
-╚══════════════════════════════════════════════════════════════╝
-
-Welcome to TaskFlow - Your Intelligent Task Management App!
-
-INSTALLATION OPTIONS:
-━━━━━━━━━━━━━━━━━━━━━
-
-Option 1: Full Installation (Recommended)
------------------------------------------
-Run the installer script for complete setup including Ollama and LLM models:
-
-1. Open Terminal
-2. Drag 'install-taskflow.sh' into the Terminal window
-3. Press Enter and follow the prompts
-
-The installer will:
-• Install TaskFlow to /Applications
-• Install Ollama (if not present)
-• Download your selected LLM models for offline use
-• Guide you through permission setup
-
-
-Option 2: Quick Installation
-----------------------------
-If you already have Ollama installed with models:
-
-1. Drag 'TaskFlow.app' to your Applications folder
-2. Open TaskFlow from Applications
-3. Grant Screen Recording permission when prompted
-
-
-REQUIREMENTS:
-━━━━━━━━━━━━━
-• macOS 13 (Ventura) or later
-• 20GB+ free disk space (for LLM models)
-• Apple Silicon (M1/M2/M3) or Intel Mac
-
-
-AFTER INSTALLATION:
-━━━━━━━━━━━━━━━━━━━
-1. Launch TaskFlow from Applications or Launchpad
-2. Grant Screen Recording permission in System Settings
-3. Ensure Ollama is running (it starts automatically)
-4. Start capturing tasks!
-
-
-SUPPORT:
-━━━━━━━━
-For issues or questions, please refer to the documentation
-or contact support.
-
-
-Enjoy TaskFlow! 🚀
-EOF
-fi
 
 echo -e "${GREEN}✓${NC} Files prepared"
 

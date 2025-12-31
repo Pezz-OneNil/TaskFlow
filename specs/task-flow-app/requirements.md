@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Task Flow is a macOS productivity application that combines intelligent screen capture, task management, Pomodoro timing, and Kanban organization. The app enables users to quickly capture information from any screen source (emails, messages, documents) across multiple monitors, synthesize it into actionable tasks with time and priority estimates, and manage their work sessions using timed focus periods with automatic task prioritization. The application features a modern cyberpunk-inspired dark UI with neon purple accents and uses local LLM models via Ollama for intelligent task title generation.
+TaskFlow is a macOS productivity application that combines intelligent screen capture, task management, Pomodoro timing, and Kanban organization. The app enables users to quickly capture information from any screen source (emails, messages, documents) across multiple monitors, synthesize it into actionable tasks with time and priority estimates, and manage their work sessions using timed focus periods with automatic task prioritization. The application features a modern cyberpunk-inspired dark UI with neon purple accents and uses local LLM models via Ollama for intelligent task title generation.
 
 ## Glossary
 
