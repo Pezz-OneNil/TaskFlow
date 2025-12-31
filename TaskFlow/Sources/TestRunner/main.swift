@@ -948,8 +948,146 @@ do {
         }
     }
     
+    // ============================================================
+    // Property 6: Bulk Deletion Moves to Deleted Column
+    // Feature: multi-select-outlook-integration
+    // *For any* set of selected cards, confirming deletion SHALL move all selected cards
+    // to the Deleted column and clear the selection set.
+    // **Validates: Requirements 2.1, 2.3, 2.4**
+    // ============================================================
+    
+    allTests.append {
+        PropertyTest.check("Property 6: Bulk Deletion Moves to Deleted Column", iterations: 50) {
+            let selectionManager = SelectionManager.shared
+            selectionManager.clearSelection()
+            
+            // Create multiple tasks and move them to Kanban
+            let taskCount = Int.random(in: 2...5)
+            var createdTasks: [Task] = []
+            
+            for _ in 0..<taskCount {
+                let task = taskManager.createTask(
+                    title: TaskGenerators.randomString(),
+                    description: TaskGenerators.randomString(length: 20),
+                    timeEstimate: TaskGenerators.randomTimeEstimate(),
+                    priority: TaskGenerators.randomPriority()
+                )
+                // Move to Kanban backlog
+                taskManager.moveToKanban(task, column: .backlog)
+                createdTasks.append(task)
+            }
+            
+            // Select all created tasks
+            for task in createdTasks {
+                selectionManager.addToSelection(task.id)
+            }
+            
+            // Verify selection count
+            guard selectionManager.selectionCount == taskCount else {
+                // Clean up
+                for task in createdTasks {
+                    _ = taskManager.permanentlyDeleteTask(id: task.id)
+                }
+                return false
+            }
+            
+            // Perform bulk deletion (simulating what KanbanBoardView.performBulkDeletion does)
+            let selectedIds = selectionManager.getSelectedTaskIds()
+            for taskId in selectedIds {
+                if let task = taskManager.getAllKanbanTasks().first(where: { $0.id == taskId }) {
+                    taskManager.softDeleteTask(task)
+                }
+            }
+            selectionManager.clearSelection()
+            
+            // Verify all tasks are now in Deleted column
+            var allInDeleted = true
+            for task in createdTasks {
+                if let updatedTask = taskManager.getAllTasks().first(where: { $0.id == task.id }) {
+                    if updatedTask.kanbanColumn != .deleted || updatedTask.status != .deleted {
+                        allInDeleted = false
+                        break
+                    }
+                } else {
+                    allInDeleted = false
+                    break
+                }
+            }
+            
+            // Verify selection is cleared
+            let selectionCleared = !selectionManager.hasSelection
+            
+            // Clean up
+            for task in createdTasks {
+                _ = taskManager.permanentlyDeleteTask(id: task.id)
+            }
+            
+            return allInDeleted && selectionCleared
+        }
+    }
+    
 } catch {
     print("❌ Failed to initialize database: \(error)")
+}
+
+// ============================================================
+// SelectionManager Property Tests
+// Feature: multi-select-outlook-integration
+// ============================================================
+
+// Property 1: Command+Click Adds to Selection
+allTests.append {
+    SelectionManagerTests.testCommandClickAddsToSelection()
+}
+
+// Property 2: Regular Click Replaces Selection
+allTests.append {
+    SelectionManagerTests.testRegularClickReplacesSelection()
+}
+
+// Property 3: Empty Space Click Clears Selection
+allTests.append {
+    SelectionManagerTests.testEmptySpaceClickClearsSelection()
+}
+
+// Property 4: Cross-Column Selection
+allTests.append {
+    SelectionManagerTests.testCrossColumnSelection()
+}
+
+// Property 5: Escape Clears Selection
+allTests.append {
+    SelectionManagerTests.testEscapeClearsSelection()
+}
+
+// Property 7: Outlook Integration Setting Persistence
+// Feature: multi-select-outlook-integration
+allTests.append {
+    SettingsManagerTests.testOutlookIntegrationSettingPersistence()
+}
+
+// Property 8: Email Content Extraction
+// Feature: multi-select-outlook-integration
+allTests.append {
+    EmailCaptureEngineTests.testEmailContentExtraction()
+}
+
+// Property 11: Email Thread Message Identification
+// Feature: multi-select-outlook-integration
+allTests.append {
+    EmailCaptureEngineTests.testEmailThreadMessageIdentification()
+}
+
+// Property 9: LLM Email Output Generation
+// Feature: multi-select-outlook-integration
+allTests.append {
+    LLMEmailTests.testLLMEmailOutputGeneration()
+}
+
+// Property 12: Long Email Chain Truncation
+// Feature: multi-select-outlook-integration
+allTests.append {
+    LLMEmailTests.testLongEmailChainTruncation()
 }
 
 PropertyTest.runAll(allTests)

@@ -307,4 +307,191 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
         
         return LLMSummaryResult(title: title, wasGenerated: false)
     }
+    
+    // MARK: - Email Summarization
+    // Feature: multi-select-outlook-integration
+    // Per Requirements 5.3, 5.4, 6.2, 6.3, 6.4
+    
+    /// Summarize email for task title
+    /// Focuses on action items and key requests
+    public func summarizeEmailForTitle(_ email: ProcessedEmail) async -> LLMSummaryResult {
+        let startTime = Date()
+        
+        // Check availability
+        guard await isAvailable else {
+            print("LLMSummarizer: Ollama not available, using email subject as fallback")
+            return LLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
+        }
+        
+        // Get available models if not cached
+        if availableModels.isEmpty {
+            availableModels = await client.listModels()
+        }
+        
+        guard let model = selectModel() else {
+            return LLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
+        }
+        
+        // Prepare email content with truncation for long threads
+        let content = prepareEmailContentForLLM(email)
+        
+        let prompt = """
+        Create a brief, action-oriented task title (5-8 words) from this email.
+        Focus on what action the recipient needs to take.
+        Start with an action verb (e.g., "Review", "Reply to", "Follow up on", "Schedule", "Complete").
+        
+        Email Subject: \(email.metadata.subject)
+        From: \(email.metadata.sender)
+        
+        Email Content:
+        \(content)
+        
+        Return ONLY the task title, nothing else.
+        
+        Title:
+        """
+        
+        do {
+            let response = try await client.generate(
+                prompt: prompt,
+                model: model,
+                options: Self.fastOptions
+            )
+            let title = cleanTitle(response)
+            
+            let elapsed = Date().timeIntervalSince(startTime)
+            print("LLMSummarizer: Generated email title in \(String(format: "%.2f", elapsed))s")
+            
+            if title.isEmpty {
+                return LLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
+            }
+            
+            return LLMSummaryResult(title: title, wasGenerated: true)
+        } catch {
+            print("LLMSummarizer: Email title generation error - \(error)")
+            return LLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
+        }
+    }
+    
+    /// Summarize email for task description
+    /// Extracts key points and action items
+    public func summarizeEmailForDescription(_ email: ProcessedEmail) async -> String {
+        // Check availability
+        guard await isAvailable else {
+            return generateFallbackEmailDescription(email)
+        }
+        
+        // Get available models if not cached
+        if availableModels.isEmpty {
+            availableModels = await client.listModels()
+        }
+        
+        guard let model = selectModel() else {
+            return generateFallbackEmailDescription(email)
+        }
+        
+        // Prepare email content with truncation
+        let content = prepareEmailContentForLLM(email)
+        
+        let prompt = """
+        Summarize this email thread in 2-3 sentences, focusing on:
+        1. The main topic or request
+        2. Any action items or deadlines mentioned
+        3. Key context the recipient needs
+        
+        Email Subject: \(email.metadata.subject)
+        From: \(email.metadata.sender)
+        Thread contains \(email.metadata.messageCount) message(s)
+        
+        Email Content:
+        \(content)
+        
+        Return ONLY the summary, nothing else.
+        
+        Summary:
+        """
+        
+        do {
+            let response = try await client.generate(
+                prompt: prompt,
+                model: model,
+                options: [
+                    "num_predict": 150,
+                    "temperature": 0.4,
+                    "top_p": 0.9
+                ]
+            )
+            
+            let description = response
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: "Summary:", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            return description.isEmpty ? generateFallbackEmailDescription(email) : description
+        } catch {
+            print("LLMSummarizer: Email description generation error - \(error)")
+            return generateFallbackEmailDescription(email)
+        }
+    }
+    
+    /// Prepare email content for LLM with truncation for long threads
+    /// Per Requirement 6.5 - truncates oldest messages when exceeding limit
+    private func prepareEmailContentForLLM(_ email: ProcessedEmail) -> String {
+        let maxTokenEstimate = 1500  // Approximate token limit for context
+        let avgCharsPerToken = 4
+        let maxChars = maxTokenEstimate * avgCharsPerToken
+        
+        var content = ""
+        var totalChars = 0
+        var truncatedCount = 0
+        
+        // Process messages from most recent to oldest
+        for (index, message) in email.messages.enumerated() {
+            let messageContent: String
+            if let sender = message.sender {
+                messageContent = "From: \(sender)\n\(message.body)\n\n"
+            } else {
+                messageContent = message.body + "\n\n"
+            }
+            
+            // Check if adding this message would exceed limit
+            if totalChars + messageContent.count > maxChars && index > 0 {
+                truncatedCount = email.messages.count - index
+                break
+            }
+            
+            content += messageContent
+            totalChars += messageContent.count
+        }
+        
+        // Add truncation indicator if needed
+        if truncatedCount > 0 {
+            content += "[... \(truncatedCount) older message(s) truncated for brevity ...]"
+        }
+        
+        return content
+    }
+    
+    /// Generate fallback description for email
+    private func generateFallbackEmailDescription(_ email: ProcessedEmail) -> String {
+        var description = "Email from \(email.metadata.sender)"
+        
+        if !email.metadata.recipients.isEmpty {
+            description += " to \(email.metadata.recipients.joined(separator: ", "))"
+        }
+        
+        description += ".\n\n"
+        
+        // Add first paragraph of primary message
+        let primaryBody = email.primaryBody
+        let firstParagraph = primaryBody.components(separatedBy: "\n\n").first ?? primaryBody
+        
+        if firstParagraph.count > 200 {
+            description += String(firstParagraph.prefix(197)) + "..."
+        } else {
+            description += firstParagraph
+        }
+        
+        return description
+    }
 }

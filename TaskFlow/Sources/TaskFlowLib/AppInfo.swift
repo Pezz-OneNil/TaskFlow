@@ -14,11 +14,14 @@ public struct AppInfo {
     /// Application name
     public static let name = "TaskFlow"
     
-    /// Current version
-    public static let version = "1.0.5"
+    /// Current version (Semantic Versioning: MAJOR.MINOR.PATCH)
+    /// - MAJOR: Breaking changes
+    /// - MINOR: New features (backwards compatible)
+    /// - PATCH: Bug fixes (backwards compatible)
+    public static let version = "1.1.0"
     
-    /// Build number
-    public static let build = "5"
+    /// Build number (increments with each build)
+    public static let build = "6"
     
     /// Copyright year
     public static let copyrightYear = "2025"

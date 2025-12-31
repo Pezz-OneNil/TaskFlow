@@ -13,6 +13,9 @@ public final class SettingsManager: ObservableObject {
         static let selectedModel = "selectedOllamaModel"
         static let availableModels = "availableOllamaModels"
         static let savedAssignees = "savedAssigneeNames"
+        static let outlookIntegrationEnabled = "outlookIntegrationEnabled"
+        static let emailDropEnabled = "emailDropEnabled"
+        static let emailAutoCreateTasks = "emailAutoCreateTasks"
     }
     
     /// Currently selected Ollama model
@@ -30,10 +33,55 @@ public final class SettingsManager: ObservableObject {
     /// Cached list of available models
     @Published public var availableModels: [String] = []
     
+    /// Whether Outlook integration is enabled (legacy, kept for compatibility)
+    /// Feature: multi-select-outlook-integration
+    @Published public var outlookIntegrationEnabled: Bool {
+        didSet {
+            defaults.set(outlookIntegrationEnabled, forKey: Keys.outlookIntegrationEnabled)
+            print("SettingsManager: Outlook integration \(outlookIntegrationEnabled ? "enabled" : "disabled")")
+        }
+    }
+    
+    /// Whether email drag-and-drop is enabled
+    /// Feature: email-drag-drop
+    /// Per Requirement 7.2
+    @Published public var emailDropEnabled: Bool {
+        didSet {
+            defaults.set(emailDropEnabled, forKey: Keys.emailDropEnabled)
+            print("SettingsManager: Email drop \(emailDropEnabled ? "enabled" : "disabled")")
+        }
+    }
+    
+    /// Whether to auto-create tasks without showing creation dialog
+    /// Feature: email-drag-drop
+    /// Per Requirement 7.3
+    @Published public var emailAutoCreateTasks: Bool {
+        didSet {
+            defaults.set(emailAutoCreateTasks, forKey: Keys.emailAutoCreateTasks)
+            print("SettingsManager: Email auto-create tasks \(emailAutoCreateTasks ? "enabled" : "disabled")")
+        }
+    }
+    
     private init() {
+        // Load Outlook integration setting (legacy)
+        outlookIntegrationEnabled = defaults.bool(forKey: Keys.outlookIntegrationEnabled)
+        
+        // Load email drop settings (default: enabled)
+        // Use object(forKey:) to check if key exists, default to true for new installs
+        if defaults.object(forKey: Keys.emailDropEnabled) != nil {
+            emailDropEnabled = defaults.bool(forKey: Keys.emailDropEnabled)
+        } else {
+            emailDropEnabled = true
+        }
+        
+        // Auto-create defaults to false (show dialog for review)
+        emailAutoCreateTasks = defaults.bool(forKey: Keys.emailAutoCreateTasks)
+        
         // Load saved model
         selectedModel = defaults.string(forKey: Keys.selectedModel)
         print("SettingsManager: Loaded selected model: \(selectedModel ?? "none")")
+        print("SettingsManager: Email drop enabled: \(emailDropEnabled)")
+        print("SettingsManager: Email auto-create: \(emailAutoCreateTasks)")
     }
     
     /// Update available models list

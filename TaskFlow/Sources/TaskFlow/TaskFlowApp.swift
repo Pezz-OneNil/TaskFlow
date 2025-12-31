@@ -13,6 +13,7 @@ import TaskFlowLib
 @main
 struct TaskFlowApp: App {
     @StateObject private var appState = AppState()
+    @StateObject private var urlSchemeHandler = URLSchemeHandler.shared
     
     var body: some Scene {
         WindowGroup {
@@ -29,6 +30,11 @@ struct TaskFlowApp: App {
                 appState.initialize()
                 setupMenuBar()
             }
+            .onOpenURL { url in
+                // Handle taskflow:// URL scheme
+                urlSchemeHandler.handleURL(url)
+            }
+            .environmentObject(urlSchemeHandler)
         }
         .windowStyle(.hiddenTitleBar)
         .commands {

@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// Kanban board view with five columns (including Deleted)
-/// Per Requirements 5.1, 5.2, 5.8
+/// Kanban board view with five columns (including Deleted) and multi-select support
+/// Per Requirements 1.5, 1.7, 2.1-2.6, 5.1, 5.2, 5.8
 public struct KanbanBoardView: View {
     @ObservedObject var taskManager: TaskManager
+    @ObservedObject private var selectionManager = SelectionManager.shared
     let searchQuery: String
     let filterTasks: ([Task]) -> [Task]
     let onMoveColumn: (Task, KanbanColumn) -> Void
@@ -12,6 +13,9 @@ public struct KanbanBoardView: View {
     let onRestore: (Task) -> Void
     let onPermanentDelete: (Task) -> Void
     let onEdit: (Task) -> Void
+    let onStatusMessage: ((String) -> Void)?
+    
+    @State private var showingDeleteConfirmation = false
     
     public init(
         taskManager: TaskManager,
@@ -22,7 +26,8 @@ public struct KanbanBoardView: View {
         onComplete: @escaping (Task) -> Void = { _ in },
         onRestore: @escaping (Task) -> Void = { _ in },
         onPermanentDelete: @escaping (Task) -> Void = { _ in },
-        onEdit: @escaping (Task) -> Void = { _ in }
+        onEdit: @escaping (Task) -> Void = { _ in },
+        onStatusMessage: ((String) -> Void)? = nil
     ) {
         self.taskManager = taskManager
         self.searchQuery = searchQuery
@@ -33,10 +38,49 @@ public struct KanbanBoardView: View {
         self.onRestore = onRestore
         self.onPermanentDelete = onPermanentDelete
         self.onEdit = onEdit
+        self.onStatusMessage = onStatusMessage
     }
     
     public var body: some View {
         VStack(alignment: .leading, spacing: CyberpunkTheme.spacingM) {
+            // Selection indicator bar
+            if selectionManager.hasSelection {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(CyberpunkTheme.accentCyan)
+                    Text("\(selectionManager.selectionCount) card(s) selected")
+                        .font(CyberpunkTheme.fontCaption)
+                        .foregroundColor(CyberpunkTheme.textSecondary)
+                    
+                    Spacer()
+                    
+                    Button(action: { showingDeleteConfirmation = true }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "trash")
+                            Text("Delete")
+                        }
+                        .font(CyberpunkTheme.fontCaption)
+                        .foregroundColor(CyberpunkTheme.accentMagenta)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Delete selected cards (⌫)")
+                    
+                    Button(action: { selectionManager.clearSelection() }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "xmark.circle")
+                            Text("Clear")
+                        }
+                        .font(CyberpunkTheme.fontCaption)
+                        .foregroundColor(CyberpunkTheme.textTertiary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Clear selection (Esc)")
+                }
+                .padding(.horizontal, CyberpunkTheme.spacingM)
+                .padding(.vertical, CyberpunkTheme.spacingS)
+                .background(CyberpunkTheme.backgroundSecondary.opacity(0.8))
+            }
+            
             // Search results indicator
             if !searchQuery.isEmpty {
                 HStack {
@@ -70,11 +114,63 @@ public struct KanbanBoardView: View {
             .padding(.top, CyberpunkTheme.spacingS)
         }
         .background(CyberpunkTheme.backgroundPrimary)
+        .contentShape(Rectangle()) // Make entire area clickable for deselection
+        .onTapGesture {
+            // Click on empty space clears selection
+            // Per Requirement 1.5
+            selectionManager.clearSelection()
+        }
+        .background(
+            KeyboardEventHandler(
+                onDelete: {
+                    // Delete key: trigger bulk deletion
+                    // Per Requirement 2.1
+                    if selectionManager.hasSelection {
+                        showingDeleteConfirmation = true
+                    }
+                },
+                onEscape: {
+                    // Escape key: clear selection
+                    // Per Requirement 1.7
+                    selectionManager.clearSelection()
+                }
+            )
+        )
+        .alert("Delete \(selectionManager.selectionCount) Task(s)?", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                performBulkDeletion()
+            }
+        } message: {
+            Text("The selected tasks will be moved to the Deleted column.")
+        }
     }
     
     private func tasksForColumn(_ column: KanbanColumn) -> [Task] {
         let columnTasks = taskManager.getAllKanbanTasks().filter { $0.kanbanColumn == column }
         return filterTasks(columnTasks)
+    }
+    
+    /// Perform bulk deletion of selected tasks
+    /// Per Requirements 2.1, 2.3, 2.4, 2.6
+    private func performBulkDeletion() {
+        let selectedIds = selectionManager.getSelectedTaskIds()
+        var deletedCount = 0
+        
+        for taskId in selectedIds {
+            if let task = taskManager.getAllKanbanTasks().first(where: { $0.id == taskId }) {
+                taskManager.softDeleteTask(task)
+                deletedCount += 1
+            }
+        }
+        
+        // Clear selection after deletion
+        selectionManager.clearSelection()
+        
+        // Show status message
+        if deletedCount > 0 {
+            onStatusMessage?("Deleted \(deletedCount) task(s)")
+        }
     }
 }
 
@@ -193,7 +289,8 @@ public struct KanbanColumnView: View {
     }
 }
 
-/// Task card for Kanban board
+/// Task card for Kanban board with multi-select support
+/// Per Requirements 1.1-1.4, 5.11
 public struct KanbanTaskCard: View {
     let task: Task
     let onMoveColumn: (Task, KanbanColumn) -> Void
@@ -201,8 +298,14 @@ public struct KanbanTaskCard: View {
     let onComplete: (Task) -> Void
     let onEdit: (Task) -> Void
     
+    @ObservedObject private var selectionManager = SelectionManager.shared
     @State private var isHovered = false
     @State private var showingMenu = false
+    
+    /// Whether this card is currently selected
+    private var isSelected: Bool {
+        selectionManager.isSelected(task.id)
+    }
     
     public init(
         task: Task,
@@ -250,8 +353,15 @@ public struct KanbanTaskCard: View {
                 
                 Spacer()
                 
+                // Selection indicator
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(CyberpunkTheme.accentCyan)
+                }
+                
                 // Quick actions on hover
-                if isHovered {
+                if isHovered && !isSelected {
                     HStack(spacing: 4) {
                         Button(action: { onMoveToActive(task) }) {
                             Image(systemName: "arrow.left.circle")
@@ -275,24 +385,54 @@ public struct KanbanTaskCard: View {
         .padding(CyberpunkTheme.spacingS)
         .background(
             RoundedRectangle(cornerRadius: CyberpunkTheme.cornerRadiusM)
-                .fill(CyberpunkTheme.backgroundTertiary)
+                .fill(isSelected ? CyberpunkTheme.backgroundTertiary.opacity(0.9) : CyberpunkTheme.backgroundTertiary)
                 .overlay(
                     RoundedRectangle(cornerRadius: CyberpunkTheme.cornerRadiusM)
-                        .stroke(CyberpunkTheme.color(for: task.priority).opacity(isHovered ? 0.5 : 0.2), lineWidth: 1)
+                        .stroke(
+                            isSelected ? CyberpunkTheme.accentCyan : CyberpunkTheme.color(for: task.priority).opacity(isHovered ? 0.5 : 0.2),
+                            lineWidth: isSelected ? 2 : 1
+                        )
                 )
         )
-        .shadow(color: isHovered ? CyberpunkTheme.color(for: task.priority).opacity(0.2) : .clear, radius: CyberpunkTheme.glowRadiusSubtle)
+        .shadow(
+            color: isSelected ? CyberpunkTheme.accentCyan.opacity(0.4) : (isHovered ? CyberpunkTheme.color(for: task.priority).opacity(0.2) : .clear),
+            radius: isSelected ? CyberpunkTheme.glowRadiusIntense : CyberpunkTheme.glowRadiusSubtle
+        )
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isHovered = hovering
             }
         }
+        .simultaneousGesture(
+            TapGesture()
+                .modifiers(.command)
+                .onEnded { _ in
+                    // Command+click: toggle selection
+                    selectionManager.handleCardClick(task.id, commandKeyPressed: true)
+                }
+        )
         .onTapGesture {
-            onEdit(task)
+            // Check if we should handle as selection or edit
+            // If there's already a selection, regular click adds to selection behavior
+            if selectionManager.hasSelection {
+                // Regular click when selection exists: replace selection with this card
+                selectionManager.selectOnly(task.id)
+            } else {
+                // No selection: open edit view
+                onEdit(task)
+            }
         }
         .contextMenu {
             Button("View Details") {
                 onEdit(task)
+            }
+            
+            if selectionManager.hasSelection {
+                Divider()
+                
+                Button("Clear Selection") {
+                    selectionManager.clearSelection()
+                }
             }
             
             Divider()
@@ -340,15 +480,21 @@ public struct EmptyKanbanView: View {
     }
 }
 
-/// Task card for Deleted column with restore/permanent delete actions
-/// Per Requirement 5.7
+/// Task card for Deleted column with restore/permanent delete actions and multi-select support
+/// Per Requirements 1.6, 5.7
 public struct DeletedTaskCard: View {
     let task: Task
     let onRestore: (Task) -> Void
     let onPermanentDelete: (Task) -> Void
     
+    @ObservedObject private var selectionManager = SelectionManager.shared
     @State private var isHovered = false
     @State private var showingDeleteConfirmation = false
+    
+    /// Whether this card is currently selected
+    private var isSelected: Bool {
+        selectionManager.isSelected(task.id)
+    }
     
     public init(
         task: Task,
@@ -381,8 +527,15 @@ public struct DeletedTaskCard: View {
                 
                 Spacer()
                 
+                // Selection indicator
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(CyberpunkTheme.accentCyan)
+                }
+                
                 // Actions on hover
-                if isHovered {
+                if isHovered && !isSelected {
                     HStack(spacing: 4) {
                         Button(action: { onRestore(task) }) {
                             Image(systemName: "arrow.uturn.backward.circle")
@@ -406,20 +559,51 @@ public struct DeletedTaskCard: View {
         .padding(CyberpunkTheme.spacingS)
         .background(
             RoundedRectangle(cornerRadius: CyberpunkTheme.cornerRadiusM)
-                .fill(CyberpunkTheme.backgroundTertiary.opacity(0.7))
+                .fill(CyberpunkTheme.backgroundTertiary.opacity(isSelected ? 0.8 : 0.7))
                 .overlay(
                     RoundedRectangle(cornerRadius: CyberpunkTheme.cornerRadiusM)
-                        .stroke(CyberpunkTheme.kanbanDeleted.opacity(isHovered ? 0.5 : 0.2), lineWidth: 1)
+                        .stroke(
+                            isSelected ? CyberpunkTheme.accentCyan : CyberpunkTheme.kanbanDeleted.opacity(isHovered ? 0.5 : 0.2),
+                            lineWidth: isSelected ? 2 : 1
+                        )
                 )
+        )
+        .shadow(
+            color: isSelected ? CyberpunkTheme.accentCyan.opacity(0.4) : .clear,
+            radius: isSelected ? CyberpunkTheme.glowRadiusIntense : 0
         )
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isHovered = hovering
             }
         }
+        .simultaneousGesture(
+            TapGesture()
+                .modifiers(.command)
+                .onEnded { _ in
+                    // Command+click: toggle selection
+                    selectionManager.handleCardClick(task.id, commandKeyPressed: true)
+                }
+        )
+        .onTapGesture {
+            // Check if we should handle as selection
+            if selectionManager.hasSelection {
+                // Regular click when selection exists: replace selection with this card
+                selectionManager.selectOnly(task.id)
+            }
+            // No default action for deleted cards (no edit view)
+        }
         .contextMenu {
             Button("Restore to Backlog") {
                 onRestore(task)
+            }
+            
+            if selectionManager.hasSelection {
+                Divider()
+                
+                Button("Clear Selection") {
+                    selectionManager.clearSelection()
+                }
             }
             
             Divider()
@@ -435,6 +619,45 @@ public struct DeletedTaskCard: View {
             }
         } message: {
             Text("This action cannot be undone. The task '\(task.title)' will be permanently removed.")
+        }
+    }
+}
+
+
+/// Helper view for handling keyboard events in SwiftUI (macOS 13+ compatible)
+/// Per Requirements 1.7, 2.1
+struct KeyboardEventHandler: NSViewRepresentable {
+    let onDelete: () -> Void
+    let onEscape: () -> Void
+    
+    func makeNSView(context: Context) -> KeyboardEventNSView {
+        let view = KeyboardEventNSView()
+        view.onDelete = onDelete
+        view.onEscape = onEscape
+        return view
+    }
+    
+    func updateNSView(_ nsView: KeyboardEventNSView, context: Context) {
+        nsView.onDelete = onDelete
+        nsView.onEscape = onEscape
+    }
+}
+
+/// NSView that captures keyboard events
+class KeyboardEventNSView: NSView {
+    var onDelete: (() -> Void)?
+    var onEscape: (() -> Void)?
+    
+    override var acceptsFirstResponder: Bool { true }
+    
+    override func keyDown(with event: NSEvent) {
+        switch event.keyCode {
+        case 51, 117: // Delete (backspace) or Forward Delete
+            onDelete?()
+        case 53: // Escape
+            onEscape?()
+        default:
+            super.keyDown(with: event)
         }
     }
 }

@@ -30,5 +30,16 @@
     <string>TaskFlow needs screen capture access to extract text from your screen for task creation.</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>TaskFlow needs accessibility access for enhanced features.</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.pezz.taskflow.url</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>taskflow</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>

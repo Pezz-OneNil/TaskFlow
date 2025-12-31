@@ -11,12 +11,38 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
+/// Settings section navigation
+public enum SettingsSection: String, CaseIterable, Identifiable {
+    case backup = "Backup & Restore"
+    case integrations = "Integrations"
+    case about = "About"
+    
+    public var id: String { rawValue }
+    
+    var icon: String {
+        switch self {
+        case .backup: return "externaldrive"
+        case .integrations: return "puzzlepiece.extension"
+        case .about: return "info.circle"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .backup: return CyberpunkTheme.accentCyan
+        case .integrations: return CyberpunkTheme.accentMagenta
+        case .about: return CyberpunkTheme.accentPurple
+        }
+    }
+}
+
 /// View for managing backups and restoration
 /// Per Requirement 20 (Data Migration and Upgrade Safety)
 public struct BackupRestoreView: View {
     @ObservedObject var backupManager: BackupManager
     @ObservedObject var taskManager: TaskManager
     
+    @State private var selectedSection: SettingsSection = .backup
     @State private var showingRestoreConfirmation = false
     @State private var selectedBackup: BackupInfo?
     @State private var showingExportPanel = false
@@ -31,35 +57,29 @@ public struct BackupRestoreView: View {
     }
     
     public var body: some View {
-        VStack(alignment: .leading, spacing: CyberpunkTheme.spacingL) {
-            // Header
-            HStack {
-                GlowingText("Backup & Restore", color: CyberpunkTheme.accentPurple, font: CyberpunkTheme.fontTitle)
-                Spacer()
+        HStack(spacing: 0) {
+            // Sidebar navigation
+            settingsSidebar
+            
+            Divider()
+                .background(CyberpunkTheme.accentPurple.opacity(0.3))
+            
+            // Content area
+            ScrollView {
+                VStack(alignment: .leading, spacing: CyberpunkTheme.spacingL) {
+                    switch selectedSection {
+                    case .backup:
+                        backupContent
+                    case .integrations:
+                        integrationsContent
+                    case .about:
+                        aboutContent
+                    }
+                }
+                .padding(CyberpunkTheme.spacingL)
             }
-            
-            // Status section
-            statusSection
-            
-            Divider()
-                .background(CyberpunkTheme.accentPurple.opacity(0.3))
-            
-            // Actions section
-            actionsSection
-            
-            Divider()
-                .background(CyberpunkTheme.accentPurple.opacity(0.3))
-            
-            // Backup list
-            backupListSection
-            
-            Spacer()
-            
-            // About section
-            aboutSection
         }
-        .padding(CyberpunkTheme.spacingL)
-        .frame(minWidth: 500, minHeight: 400)
+        .frame(minWidth: 600, minHeight: 400)
         .background(CyberpunkTheme.backgroundPrimary)
         .alert(isPresented: $showingAlert) {
             Alert(
@@ -79,6 +99,106 @@ public struct BackupRestoreView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will replace all current tasks with the backup data. This action cannot be undone.")
+        }
+    }
+    
+    // MARK: - Settings Sidebar
+    
+    private var settingsSidebar: some View {
+        VStack(alignment: .leading, spacing: CyberpunkTheme.spacingXS) {
+            Text("Settings")
+                .font(CyberpunkTheme.fontHeadline)
+                .foregroundColor(CyberpunkTheme.textPrimary)
+                .padding(.horizontal, CyberpunkTheme.spacingM)
+                .padding(.top, CyberpunkTheme.spacingM)
+                .padding(.bottom, CyberpunkTheme.spacingS)
+            
+            ForEach(SettingsSection.allCases) { section in
+                SettingsSidebarButton(
+                    section: section,
+                    isSelected: selectedSection == section
+                ) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        selectedSection = section
+                    }
+                }
+            }
+            
+            Spacer()
+        }
+        .frame(width: 160)
+        .background(CyberpunkTheme.backgroundSecondary)
+    }
+    
+    // MARK: - Backup Content
+    
+    private var backupContent: some View {
+        VStack(alignment: .leading, spacing: CyberpunkTheme.spacingL) {
+            // Section header
+            HStack {
+                Image(systemName: "externaldrive")
+                    .foregroundColor(CyberpunkTheme.accentCyan)
+                    .font(.system(size: 20))
+                Text("Backup & Restore")
+                    .font(CyberpunkTheme.fontTitle)
+                    .foregroundColor(CyberpunkTheme.textPrimary)
+            }
+            
+            // Status section
+            statusSection
+            
+            Divider()
+                .background(CyberpunkTheme.accentPurple.opacity(0.3))
+            
+            // Actions section
+            actionsSection
+            
+            Divider()
+                .background(CyberpunkTheme.accentPurple.opacity(0.3))
+            
+            // Backup list
+            backupListSection
+        }
+    }
+    
+    // MARK: - Integrations Content
+    
+    private var integrationsContent: some View {
+        VStack(alignment: .leading, spacing: CyberpunkTheme.spacingL) {
+            // Section header
+            HStack {
+                Image(systemName: "puzzlepiece.extension")
+                    .foregroundColor(CyberpunkTheme.accentMagenta)
+                    .font(.system(size: 20))
+                Text("Integrations")
+                    .font(CyberpunkTheme.fontTitle)
+                    .foregroundColor(CyberpunkTheme.textPrimary)
+            }
+            
+            Text("Connect TaskFlow with external applications to enhance your workflow.")
+                .font(CyberpunkTheme.fontCaption)
+                .foregroundColor(CyberpunkTheme.textSecondary)
+            
+            // Email Integration (drag and drop .eml files)
+            EmailSettingsSection(settingsManager: SettingsManager.shared)
+        }
+    }
+    
+    // MARK: - About Content
+    
+    private var aboutContent: some View {
+        VStack(alignment: .leading, spacing: CyberpunkTheme.spacingL) {
+            // Section header
+            HStack {
+                Image(systemName: "info.circle")
+                    .foregroundColor(CyberpunkTheme.accentPurple)
+                    .font(.system(size: 20))
+                Text("About")
+                    .font(CyberpunkTheme.fontTitle)
+                    .foregroundColor(CyberpunkTheme.textPrimary)
+            }
+            
+            aboutSection
         }
     }
     
@@ -228,27 +348,161 @@ public struct BackupRestoreView: View {
     // MARK: - About Section
     
     private var aboutSection: some View {
-        VStack(spacing: CyberpunkTheme.spacingS) {
-            Divider()
-                .background(CyberpunkTheme.accentPurple.opacity(0.3))
-            
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(AppInfo.name) v\(AppInfo.version)")
-                        .font(CyberpunkTheme.fontBody)
-                        .foregroundColor(CyberpunkTheme.accentPurple)
+        VStack(alignment: .leading, spacing: CyberpunkTheme.spacingM) {
+            // App info card
+            NeonCard(color: CyberpunkTheme.accentPurple) {
+                VStack(alignment: .leading, spacing: CyberpunkTheme.spacingM) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(AppInfo.name)
+                                .font(CyberpunkTheme.fontHeadline)
+                                .foregroundColor(CyberpunkTheme.textPrimary)
+                            Text("Version \(AppInfo.version)")
+                                .font(CyberpunkTheme.fontBody)
+                                .foregroundColor(CyberpunkTheme.accentPurple)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundColor(CyberpunkTheme.accentPurple)
+                            .font(.system(size: 32))
+                    }
+                    
+                    Divider()
+                        .background(CyberpunkTheme.accentPurple.opacity(0.3))
+                    
                     Text(AppInfo.copyright)
                         .font(CyberpunkTheme.fontCaption)
                         .foregroundColor(CyberpunkTheme.textTertiary)
+                    
+                    // Database info
+                    HStack(spacing: CyberpunkTheme.spacingL) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Schema Version")
+                                .font(CyberpunkTheme.fontCaption)
+                                .foregroundColor(CyberpunkTheme.textTertiary)
+                            Text("v\(CURRENT_SCHEMA_VERSION)")
+                                .font(CyberpunkTheme.fontBody)
+                                .foregroundColor(CyberpunkTheme.accentGreen)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Total Tasks")
+                                .font(CyberpunkTheme.fontCaption)
+                                .foregroundColor(CyberpunkTheme.textTertiary)
+                            Text("\(taskManager.getAllTasks().count)")
+                                .font(CyberpunkTheme.fontBody)
+                                .foregroundColor(CyberpunkTheme.textPrimary)
+                        }
+                    }
+                }
+            }
+            
+            // How to Use section
+            howToUseSection
+        }
+    }
+    
+    // MARK: - How to Use Section
+    
+    private var howToUseSection: some View {
+        NeonCard(color: CyberpunkTheme.accentCyan) {
+            VStack(alignment: .leading, spacing: CyberpunkTheme.spacingM) {
+                HStack {
+                    Image(systemName: "questionmark.circle")
+                        .foregroundColor(CyberpunkTheme.accentCyan)
+                    Text("How to Use TaskFlow")
+                        .font(CyberpunkTheme.fontHeadline)
+                        .foregroundColor(CyberpunkTheme.textPrimary)
                 }
                 
-                Spacer()
+                Divider()
+                    .background(CyberpunkTheme.accentCyan.opacity(0.3))
                 
-                Image(systemName: "checkmark.seal.fill")
-                    .foregroundColor(CyberpunkTheme.accentPurple)
-                    .font(.system(size: 24))
+                VStack(alignment: .leading, spacing: CyberpunkTheme.spacingS) {
+                    // Screen Capture
+                    featureRow(
+                        icon: "camera.viewfinder",
+                        title: "Screen Capture",
+                        shortcut: "⌘⇧C",
+                        description: "Capture any part of your screen to create a task. OCR extracts text automatically, and AI can generate a title.",
+                        color: CyberpunkTheme.accentPurple
+                    )
+                    
+                    // Email Drag & Drop
+                    featureRow(
+                        icon: "envelope.badge.fill",
+                        title: "Email Drag & Drop",
+                        shortcut: nil,
+                        description: "Drag .eml files from Finder or your email client directly into TaskFlow to create tasks from emails.",
+                        color: CyberpunkTheme.accentMagenta
+                    )
+                    
+                    // Pomodoro Timer
+                    featureRow(
+                        icon: "timer",
+                        title: "Pomodoro Timer",
+                        shortcut: nil,
+                        description: "Use the Pomodoro tab to focus on tasks with timed work sessions. Select a task and start a focused session.",
+                        color: CyberpunkTheme.accentCyan
+                    )
+                    
+                    // Kanban Board
+                    featureRow(
+                        icon: "rectangle.3.group",
+                        title: "Kanban Board",
+                        shortcut: nil,
+                        description: "Organize tasks visually across Backlog, In Progress, Blocked, and Done columns. Drag tasks between columns.",
+                        color: CyberpunkTheme.accentGreen
+                    )
+                    
+                    // Task Management
+                    featureRow(
+                        icon: "checklist",
+                        title: "Task Management",
+                        shortcut: nil,
+                        description: "Set priorities, time estimates, and assignees. Use the search bar to filter tasks. Click any task to view details.",
+                        color: CyberpunkTheme.accentPurple
+                    )
+                }
             }
         }
+    }
+    
+    private func featureRow(icon: String, title: String, shortcut: String?, description: String, color: Color) -> some View {
+        HStack(alignment: .top, spacing: CyberpunkTheme.spacingS) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.system(size: 16))
+                .frame(width: 24)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: CyberpunkTheme.spacingS) {
+                    Text(title)
+                        .font(CyberpunkTheme.fontBody)
+                        .foregroundColor(CyberpunkTheme.textPrimary)
+                    
+                    if let shortcut = shortcut {
+                        Text(shortcut)
+                            .font(CyberpunkTheme.fontCaption)
+                            .foregroundColor(color)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(color.opacity(0.2))
+                            )
+                    }
+                }
+                
+                Text(description)
+                    .font(CyberpunkTheme.fontCaption)
+                    .foregroundColor(CyberpunkTheme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, 4)
     }
     
     // MARK: - Actions
@@ -452,6 +706,44 @@ struct BackupRowView: View {
             RoundedRectangle(cornerRadius: CyberpunkTheme.cornerRadiusM)
                 .fill(isHovered ? CyberpunkTheme.backgroundSecondary : Color.clear)
         )
+        .onHover { hovering in
+            isHovered = hovering
+        }
+    }
+}
+
+/// Sidebar button for settings navigation
+struct SettingsSidebarButton: View {
+    let section: SettingsSection
+    let isSelected: Bool
+    let action: () -> Void
+    
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: CyberpunkTheme.spacingS) {
+                Image(systemName: section.icon)
+                    .font(.system(size: 14))
+                    .frame(width: 20)
+                Text(section.rawValue)
+                    .font(CyberpunkTheme.fontCaption)
+                Spacer()
+            }
+            .foregroundColor(isSelected ? section.color : CyberpunkTheme.textSecondary)
+            .padding(.horizontal, CyberpunkTheme.spacingM)
+            .padding(.vertical, CyberpunkTheme.spacingS)
+            .background(
+                RoundedRectangle(cornerRadius: CyberpunkTheme.cornerRadiusS)
+                    .fill(isSelected ? section.color.opacity(0.15) : (isHovered ? CyberpunkTheme.backgroundPrimary.opacity(0.5) : Color.clear))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: CyberpunkTheme.cornerRadiusS)
+                    .stroke(isSelected ? section.color.opacity(0.5) : Color.clear, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, CyberpunkTheme.spacingXS)
         .onHover { hovering in
             isHovered = hovering
         }

@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 /// Wrapper for captured screenshot to use with sheet(item:) binding
 /// This ensures the screenshot is available when the sheet appears
@@ -10,6 +11,16 @@ public struct CapturedScreenshotItem: Identifiable {
     public init(image: NSImage, id: UUID = UUID()) {
         self.id = id
         self.image = image
+    }
+}
+
+/// Wrapper for email drop result to use with sheet(item:) binding
+public struct EmailDropResultItem: Identifiable {
+    public let id = UUID()
+    public let result: EmailDropResult
+    
+    public init(result: EmailDropResult) {
+        self.result = result
     }
 }
 
@@ -46,6 +57,7 @@ public struct MainWindowView: View {
     @ObservedObject var pomodoroEngine: PomodoroEngine
     @ObservedObject var backupManager: BackupManager
     @StateObject private var statusBarManager = StatusBarManager()
+    @StateObject private var emailDropHandler = EmailDropHandler()
     
     @State private var selectedTab: NavigationTab = .tasks
     @State private var showingTaskCreation = false
@@ -61,6 +73,9 @@ public struct MainWindowView: View {
     @State private var llmGeneratedTitle: String?
     @State private var isLLMGenerated = false
     @State private var isProcessingCapture = false
+    
+    // Email drop state
+    @State private var emailDropResultItem: EmailDropResultItem?
     
     // Edit task state
     @State private var taskToEdit: Task?
@@ -134,7 +149,20 @@ public struct MainWindowView: View {
                         .padding(.bottom, CyberpunkTheme.spacingL + 28) // Account for status bar height
                 }
             }
+            
+            // Email drop zone overlay
+            DropZoneOverlay(
+                dropState: emailDropHandler.dropState,
+                progress: emailDropHandler.progress
+            )
         }
+        // Email drag and drop handling
+        .onDrop(of: [.fileURL], delegate: EmailDropDelegate(
+            dropHandler: emailDropHandler,
+            onDropComplete: { results in
+                handleEmailDropResults(results)
+            }
+        ))
         .sheet(item: $capturedScreenshotItem) { item in
             TaskCreationSheet(
                 screenshot: item.image,
@@ -177,6 +205,15 @@ public struct MainWindowView: View {
             )
             .frame(minWidth: 500, minHeight: 600)
         }
+        .sheet(item: $emailDropResultItem) { item in
+            EmailTaskCreationSheet(
+                result: item.result,
+                taskManager: taskManager,
+                onDismiss: {
+                    emailDropResultItem = nil
+                }
+            )
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("MenuBarCaptureRequested"))) { _ in
             // Handle capture request from menu bar
             startCapture()
@@ -187,6 +224,66 @@ public struct MainWindowView: View {
         }
         .background(WindowAccessor(window: $mainWindow))
         .frame(minWidth: 900, minHeight: 600)
+    }
+    
+    // MARK: - Email Drop Handling
+    
+    /// Handle results from email drop
+    private func handleEmailDropResults(_ results: [EmailDropResult]) {
+        let successResults = results.filter { $0.isSuccess }
+        
+        if successResults.isEmpty {
+            // All failed
+            statusBarManager.setError("Failed to process email files")
+            statusBarManager.clearAfterDelay(3)
+            return
+        }
+        
+        // Check if auto-create is enabled
+        if SettingsManager.shared.emailAutoCreateTasks {
+            // Auto-create tasks without showing dialog
+            for result in successResults {
+                if let email = result.parsedEmail {
+                    let title = result.suggestedTitle ?? email.subject
+                    let description = result.suggestedDescription ?? extractEmailDescription(email)
+                    
+                    var task = taskManager.createTask(
+                        title: title,
+                        description: description,
+                        timeEstimate: .twenty,
+                        priority: .medium
+                    )
+                    
+                    // Add email metadata and body content
+                    task.metadata.sender = email.sender.displayString
+                    task.metadata.subject = email.subject
+                    task.furtherDetails = email.body
+                    _ = taskManager.updateTask(task)
+                }
+            }
+            
+            statusBarManager.setSuccess("Created \(successResults.count) task(s) from email")
+            statusBarManager.clearAfterDelay(2)
+        } else {
+            // Show task creation dialog for first result
+            // (for multiple files, we process one at a time)
+            if let firstResult = successResults.first {
+                emailDropResultItem = EmailDropResultItem(result: firstResult)
+            }
+        }
+    }
+    
+    /// Extract description from parsed email
+    private func extractEmailDescription(_ email: ParsedEmail) -> String {
+        let body = email.body
+        let maxLength = 300
+        
+        if body.count > maxLength {
+            let index = body.index(body.startIndex, offsetBy: maxLength)
+            return String(body[..<index]) + "..."
+        }
+        
+        return body
     }
     
     // MARK: - Tab Bar

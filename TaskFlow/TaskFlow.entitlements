@@ -2,8 +2,32 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- Disable sandboxing for full functionality -->
     <key>com.apple.security.app-sandbox</key>
     <false/>
+    
+    <!-- Allow outgoing network connections (for Ollama API) -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    
+    <!-- Allow reading/writing user-selected files -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    
+    <!-- Hardened Runtime Exceptions -->
+    <!-- Allow loading unsigned libraries (if needed for plugins) -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <false/>
+    
+    <!-- Allow DYLD environment variables (disabled for security) -->
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <false/>
+    
+    <!-- Disable library validation (not needed) -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <false/>
+    
+    <!-- Camera and microphone not needed -->
     <key>com.apple.security.device.camera</key>
     <false/>
     <key>com.apple.security.device.audio-input</key>

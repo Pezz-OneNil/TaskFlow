@@ -26,6 +26,7 @@ DerivedData/
 # Build outputs
 dist/
 *.dmg
+TaskFlow/TaskFlow.app/
 
 # IDE
 .idea/
