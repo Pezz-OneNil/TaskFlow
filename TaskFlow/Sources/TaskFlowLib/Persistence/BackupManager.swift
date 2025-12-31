@@ -243,13 +243,25 @@ public final class BackupManager: ObservableObject {
         let backup = try pool.read { db -> BackupData in
             let taskRecords = try TaskRecord.fetchAll(db)
             let metadataRecords = try TaskMetadataRecord.fetchAll(db)
+            let calendarEventRecords = try CalendarEventRecord.fetchAll(db)
             let version = try Int.fetchOne(db, sql: "SELECT version FROM schema_info LIMIT 1") ?? CURRENT_SCHEMA_VERSION
+            
+            // Load category names from UserDefaults
+            var categoryNames: [String: String] = [:]
+            for i in 0..<10 {
+                let key = "category_\(i)_name"
+                if let name = UserDefaults.standard.string(forKey: key) {
+                    categoryNames[key] = name
+                }
+            }
             
             return BackupData(
                 version: version,
                 createdAt: Date(),
                 tasks: taskRecords,
-                metadata: metadataRecords
+                metadata: metadataRecords,
+                calendarEvents: calendarEventRecords,
+                categoryNames: categoryNames.isEmpty ? nil : categoryNames
             )
         }
         
@@ -432,6 +444,11 @@ public final class BackupManager: ObservableObject {
             try TaskMetadataRecord.deleteAll(db)
             try TaskRecord.deleteAll(db)
             
+            // Clear calendar events if table exists
+            if try db.tableExists("calendar_events") {
+                try CalendarEventRecord.deleteAll(db)
+            }
+            
             // Restore tasks
             for taskRecord in backup.tasks {
                 try taskRecord.insert(db)
@@ -441,7 +458,26 @@ public final class BackupManager: ObservableObject {
             for metadataRecord in backup.metadata {
                 try metadataRecord.insert(db)
             }
+            
+            // Restore calendar events if present and table exists
+            if let calendarEvents = backup.calendarEvents, try db.tableExists("calendar_events") {
+                for eventRecord in calendarEvents {
+                    try eventRecord.insert(db)
+                }
+                print("📅 Restored \(calendarEvents.count) calendar events")
+            }
         }
+        
+        // Restore category names to UserDefaults
+        if let categoryNames = backup.categoryNames {
+            for (key, name) in categoryNames {
+                UserDefaults.standard.set(name, forKey: key)
+            }
+            print("🏷️ Restored \(categoryNames.count) category names")
+        }
+        
+        // Reload calendar events in manager
+        CalendarEventManager.shared.loadEvents()
         
         // Return restored tasks
         let tasks = try pool.read { db in
@@ -622,4 +658,15 @@ struct BackupData: Codable {
     let createdAt: Date
     let tasks: [TaskRecord]
     let metadata: [TaskMetadataRecord]
+    let calendarEvents: [CalendarEventRecord]?
+    let categoryNames: [String: String]?
+    
+    init(version: Int, createdAt: Date, tasks: [TaskRecord], metadata: [TaskMetadataRecord], calendarEvents: [CalendarEventRecord]? = nil, categoryNames: [String: String]? = nil) {
+        self.version = version
+        self.createdAt = createdAt
+        self.tasks = tasks
+        self.metadata = metadata
+        self.calendarEvents = calendarEvents
+        self.categoryNames = categoryNames
+    }
 }

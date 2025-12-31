@@ -35,7 +35,7 @@ public struct YearSelectorView: View {
                 }
             }
             .pickerStyle(.menu)
-            .frame(width: 100)
+            .frame(width: 120)
             .foregroundColor(CyberpunkTheme.accentYellow)
             .font(CyberpunkTheme.fontHeadline)
             

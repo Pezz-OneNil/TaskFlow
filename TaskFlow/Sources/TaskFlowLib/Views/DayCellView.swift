@@ -16,6 +16,7 @@ public struct DayCellView: View {
     var onEventResize: ((CalendarEvent, Date) -> Void)?
     
     @State private var isHovered = false
+    @State private var showAllEventsPopover = false
     
     private let calendar = Calendar.current
     private let dayOfWeekNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -56,6 +57,12 @@ public struct DayCellView: View {
     private var isWeekend: Bool {
         let weekday = calendar.component(.weekday, from: date)
         return weekday == 1 || weekday == 7
+    }
+    
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
     }
     
     public var body: some View {
@@ -137,6 +144,13 @@ public struct DayCellView: View {
                                 .font(.system(size: 9, weight: .medium))
                                 .foregroundColor(CyberpunkTheme.accentYellow)
                                 .padding(.horizontal, 3)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    showAllEventsPopover = true
+                                }
+                                .popover(isPresented: $showAllEventsPopover, arrowEdge: .bottom) {
+                                    allEventsPopoverContent
+                                }
                         }
                     }
                     .padding(.horizontal, 2)
@@ -152,6 +166,82 @@ public struct DayCellView: View {
             Rectangle()
                 .stroke(borderColor, lineWidth: isSelected ? 2 : 1)
         )
+    }
+    
+    /// Popover content showing all events for this day
+    private var allEventsPopoverContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Header
+            HStack {
+                Text(formattedDate)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(CyberpunkTheme.textPrimary)
+                
+                Spacer()
+                
+                Text("\(events.count) events")
+                    .font(.system(size: 11))
+                    .foregroundColor(CyberpunkTheme.textSecondary)
+            }
+            .padding(.bottom, 4)
+            
+            Divider()
+                .background(CyberpunkTheme.backgroundTertiary)
+            
+            // Event list
+            ScrollView {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(events, id: \.id) { event in
+                        eventRow(event)
+                    }
+                }
+            }
+            .frame(maxHeight: 200)
+        }
+        .padding(12)
+        .frame(width: 220)
+        .background(CyberpunkTheme.backgroundPrimary)
+    }
+    
+    /// Single event row in the popover
+    private func eventRow(_ event: CalendarEvent) -> some View {
+        let category = categoryManager.category(for: event.categoryId)
+        let categoryColor = category?.color.color ?? CyberpunkTheme.accentYellow
+        let categoryName = category?.name ?? "Event"
+        
+        return HStack(spacing: 8) {
+            // Color indicator
+            RoundedRectangle(cornerRadius: 2)
+                .fill(categoryColor)
+                .frame(width: 4, height: 24)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(event.label.isEmpty ? categoryName : event.label)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(CyberpunkTheme.textPrimary)
+                    .lineLimit(1)
+                
+                // Duration info
+                if event.durationDays > 1 {
+                    Text("\(event.durationDays) days")
+                        .font(.system(size: 10))
+                        .foregroundColor(CyberpunkTheme.textTertiary)
+                }
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 4)
+        .padding(.horizontal, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 4)
+                .fill(CyberpunkTheme.backgroundSecondary)
+        )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            showAllEventsPopover = false
+            onEventTap(event)
+        }
     }
     
     private var borderColor: Color {

@@ -1,6 +1,24 @@
 import SwiftUI
 import AppKit
 
+/// Wrapper to make CalendarEvent identifiable for sheet presentation
+private struct EditableEvent: Identifiable {
+    let id: UUID
+    let event: CalendarEvent
+    
+    init(_ event: CalendarEvent) {
+        self.id = event.id
+        self.event = event
+    }
+}
+
+/// Wrapper for new event creation with dates
+private struct NewEventDates: Identifiable {
+    let id = UUID()
+    let startDate: Date
+    let endDate: Date
+}
+
 /// Annual Calendar View - Main view for the Annual Calendar feature
 /// Per Requirements 2.1, 2.2, 2.4, 4.1, 5.2, 5.5, 8.3
 /// Feature: annual-calendar
@@ -10,11 +28,9 @@ public struct AnnualCalendarView: View {
     @ObservedObject private var categoryManager = EventCategoryManager.shared
     
     @State private var selectedYear: Int = 2026
-    @State private var showingEventEditor = false
     @State private var showingCategoryEditor = false
-    @State private var editingEvent: CalendarEvent?
-    @State private var newEventStartDate: Date?
-    @State private var newEventEndDate: Date?
+    @State private var editableEvent: EditableEvent?
+    @State private var newEventDates: NewEventDates?
     @State private var selectedDate: Date?  // For keyboard navigation
     @State private var keyboardMonitor: Any?
     
@@ -46,49 +62,41 @@ public struct AnnualCalendarView: View {
         .onDisappear {
             removeKeyboardMonitor()
         }
-        .sheet(isPresented: $showingEventEditor) {
-            if let event = editingEvent {
-                EventEditorSheet(
-                    event: event,
-                    categoryManager: categoryManager,
-                    onSave: { updatedEvent in
-                        eventManager.updateEvent(updatedEvent)
-                        editingEvent = nil
-                        showingEventEditor = false
-                    },
-                    onDelete: {
-                        eventManager.deleteEvent(id: event.id)
-                        editingEvent = nil
-                        showingEventEditor = false
-                    },
-                    onCancel: {
-                        editingEvent = nil
-                        showingEventEditor = false
-                    }
-                )
-            } else if let startDate = newEventStartDate {
-                EventEditorSheet(
-                    startDate: startDate,
-                    endDate: newEventEndDate ?? startDate,
-                    categoryManager: categoryManager,
-                    onSave: { newEvent in
-                        _ = eventManager.createEvent(
-                            categoryId: newEvent.categoryId,
-                            startDate: newEvent.startDate,
-                            endDate: newEvent.endDate,
-                            label: newEvent.label
-                        )
-                        newEventStartDate = nil
-                        newEventEndDate = nil
-                        showingEventEditor = false
-                    },
-                    onCancel: {
-                        newEventStartDate = nil
-                        newEventEndDate = nil
-                        showingEventEditor = false
-                    }
-                )
-            }
+        .sheet(item: $editableEvent) { editable in
+            EventEditorSheet(
+                event: editable.event,
+                categoryManager: categoryManager,
+                onSave: { updatedEvent in
+                    eventManager.updateEvent(updatedEvent)
+                    editableEvent = nil
+                },
+                onDelete: {
+                    eventManager.deleteEvent(id: editable.event.id)
+                    editableEvent = nil
+                },
+                onCancel: {
+                    editableEvent = nil
+                }
+            )
+        }
+        .sheet(item: $newEventDates) { dates in
+            EventEditorSheet(
+                startDate: dates.startDate,
+                endDate: dates.endDate,
+                categoryManager: categoryManager,
+                onSave: { newEvent in
+                    _ = eventManager.createEvent(
+                        categoryId: newEvent.categoryId,
+                        startDate: newEvent.startDate,
+                        endDate: newEvent.endDate,
+                        label: newEvent.label
+                    )
+                    newEventDates = nil
+                },
+                onCancel: {
+                    newEventDates = nil
+                }
+            )
         }
         .sheet(isPresented: $showingCategoryEditor) {
             CategoryEditorView(
@@ -106,7 +114,7 @@ public struct AnnualCalendarView: View {
     private func setupKeyboardMonitor() {
         keyboardMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             // Only handle if no sheet is showing
-            guard !showingEventEditor && !showingCategoryEditor else {
+            guard editableEvent == nil && newEventDates == nil && !showingCategoryEditor else {
                 return event
             }
             
@@ -163,10 +171,7 @@ public struct AnnualCalendarView: View {
     
     /// Open event editor for a date
     private func openEventEditor(for date: Date) {
-        newEventStartDate = date
-        newEventEndDate = date
-        editingEvent = nil
-        showingEventEditor = true
+        newEventDates = NewEventDates(startDate: date, endDate: date)
     }
     
     // MARK: - Event Drag & Drop
@@ -267,14 +272,10 @@ public struct AnnualCalendarView: View {
                     selectedDate: selectedDate,
                     onDayTap: { date in
                         selectedDate = date
-                        newEventStartDate = date
-                        newEventEndDate = date
-                        editingEvent = nil
-                        showingEventEditor = true
+                        newEventDates = NewEventDates(startDate: date, endDate: date)
                     },
                     onEventTap: { event in
-                        editingEvent = event
-                        showingEventEditor = true
+                        editableEvent = EditableEvent(event)
                     },
                     onEventMove: moveEvent,
                     onEventResize: resizeEvent
