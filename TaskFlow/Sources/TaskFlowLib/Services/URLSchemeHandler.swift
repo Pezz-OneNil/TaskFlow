@@ -14,6 +14,13 @@ public final class URLSchemeHandler: ObservableObject {
     
     /// URL scheme for TaskFlow
     public static let scheme = "taskflow"
+
+    private static let maxEncodedDataLength = 1_500_000
+    private static let maxDecodedDataLength = 1_000_000
+    private static let maxSubjectLength = 500
+    private static let maxBodyLength = 200_000
+    private static let maxRecipientLength = 320
+    private static let maxRecipients = 200
     
     /// Callback when email capture is received
     public var onEmailCaptureReceived: ((EmailCapture) -> Void)?
@@ -60,6 +67,11 @@ public final class URLSchemeHandler: ObservableObject {
             print("URLSchemeHandler: Missing data parameter")
             return false
         }
+
+        guard base64Data.count <= Self.maxEncodedDataLength else {
+            print("URLSchemeHandler: data parameter too large")
+            return false
+        }
         
         // Decode base64 data
         guard let decodedData = Data(base64Encoded: base64Data) else {
@@ -69,9 +81,17 @@ public final class URLSchemeHandler: ObservableObject {
                 print("URLSchemeHandler: Failed to decode base64 data")
                 return false
             }
+            guard decodedData.count <= Self.maxDecodedDataLength else {
+                print("URLSchemeHandler: decoded data too large")
+                return false
+            }
             return parseEmailData(decodedData)
         }
         
+        guard decodedData.count <= Self.maxDecodedDataLength else {
+            print("URLSchemeHandler: decoded data too large")
+            return false
+        }
         return parseEmailData(decodedData)
     }
     
@@ -81,6 +101,10 @@ public final class URLSchemeHandler: ObservableObject {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             let emailData = try decoder.decode(EmailCaptureData.self, from: data)
+            guard validateEmailData(emailData) else {
+                print("URLSchemeHandler: Email data failed validation")
+                return false
+            }
             
             // Convert to EmailCapture
             let capture = EmailCapture(
@@ -92,7 +116,7 @@ public final class URLSchemeHandler: ObservableObject {
                 conversationId: emailData.conversationId
             )
             
-            print("URLSchemeHandler: Received email capture - Subject: \(capture.subject)")
+            print("URLSchemeHandler: Received email capture")
             
             // Notify listeners
             DispatchQueue.main.async {
@@ -105,6 +129,38 @@ public final class URLSchemeHandler: ObservableObject {
             print("URLSchemeHandler: Failed to parse email data: \(error)")
             return false
         }
+    }
+
+    private func validateEmailData(_ data: EmailCaptureData) -> Bool {
+        let subject = data.subject.trimmingCharacters(in: .whitespacesAndNewlines)
+        let sender = data.sender.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !subject.isEmpty,
+              !sender.isEmpty,
+              !data.recipients.isEmpty else {
+            return false
+        }
+
+        if subject.count > Self.maxSubjectLength {
+            return false
+        }
+
+        if data.body.count > Self.maxBodyLength {
+            return false
+        }
+
+        if data.recipients.count > Self.maxRecipients {
+            return false
+        }
+
+        if data.recipients.contains(where: { recipient in
+            recipient.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || recipient.count > Self.maxRecipientLength
+        }) {
+            return false
+        }
+
+        return true
     }
 }
 
