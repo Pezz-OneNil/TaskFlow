@@ -5,7 +5,7 @@
 # © 2025 Pezz. All rights reserved.
 # 
 # Build TaskFlow as a macOS .app bundle with code signing and notarization
-# Run this script from the TaskerApp/TaskFlow directory
+# Run this script from the TaskFlow/TaskFlow directory
 #
 # PREREQUISITES FOR DISTRIBUTION:
 # 1. Apple Developer Program membership ($99/year)
