@@ -12,6 +12,8 @@ public struct MonthColumnView: View {
     let selectedDate: Date?
     let onDayTap: (Date) -> Void
     let onEventTap: (CalendarEvent) -> Void
+    var onEventMove: ((CalendarEvent, Date) -> Void)?
+    var onEventResize: ((CalendarEvent, Date) -> Void)?
     
     private let calendar = Calendar.current
     private let monthNames = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -25,7 +27,9 @@ public struct MonthColumnView: View {
         categoryManager: EventCategoryManager,
         selectedDate: Date? = nil,
         onDayTap: @escaping (Date) -> Void,
-        onEventTap: @escaping (CalendarEvent) -> Void
+        onEventTap: @escaping (CalendarEvent) -> Void,
+        onEventMove: ((CalendarEvent, Date) -> Void)? = nil,
+        onEventResize: ((CalendarEvent, Date) -> Void)? = nil
     ) {
         self.year = year
         self.month = month
@@ -35,6 +39,8 @@ public struct MonthColumnView: View {
         self.selectedDate = selectedDate
         self.onDayTap = onDayTap
         self.onEventTap = onEventTap
+        self.onEventMove = onEventMove
+        self.onEventResize = onEventResize
     }
     
     private var daysInMonth: Int {
@@ -52,7 +58,7 @@ public struct MonthColumnView: View {
             Text(monthNames[month])
                 .font(CyberpunkTheme.fontHeadline)
                 .foregroundColor(CyberpunkTheme.accentYellow)
-                .frame(width: 70)
+                .frame(width: DayCellView.cellWidth)
                 .padding(.vertical, CyberpunkTheme.spacingS)
                 .background(CyberpunkTheme.backgroundSecondary)
             
@@ -72,7 +78,9 @@ public struct MonthColumnView: View {
                         categoryManager: categoryManager,
                         isSelected: isSelected,
                         onTap: { onDayTap(date) },
-                        onEventTap: onEventTap
+                        onEventTap: onEventTap,
+                        onEventMove: onEventMove,
+                        onEventResize: onEventResize
                     )
                 }
             }

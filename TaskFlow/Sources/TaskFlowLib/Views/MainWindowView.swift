@@ -303,45 +303,56 @@ public struct MainWindowView: View {
     // MARK: - Tab Bar
     
     private var tabBar: some View {
-        HStack(spacing: CyberpunkTheme.spacingL) {
-            ForEach(NavigationTab.visibleTabs(showAnnual: settingsManager.showAnnualCalendar), id: \.self) { tab in
-                TabButton(
-                    tab: tab,
-                    isSelected: selectedTab == tab
-                ) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        selectedTab = tab
+        GeometryReader { geometry in
+            let showTabText = geometry.size.width > 700 // Hide text below 700px width
+            
+            HStack(spacing: showTabText ? CyberpunkTheme.spacingL : CyberpunkTheme.spacingM) {
+                ForEach(NavigationTab.visibleTabs(showAnnual: settingsManager.showAnnualCalendar), id: \.self) { tab in
+                    TabButton(
+                        tab: tab,
+                        isSelected: selectedTab == tab,
+                        showText: showTabText
+                    ) {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedTab = tab
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                // Search bar - hide when very narrow
+                if geometry.size.width > 600 {
+                    searchBar
+                }
+                
+                // Model selector - hide when narrow
+                if geometry.size.width > 800 {
+                    ModelSelectorView(llmSummarizer: llmSummarizer)
+                }
+                
+                // Quick stats
+                HStack(spacing: CyberpunkTheme.spacingM) {
+                    StatBadge(
+                        icon: "checklist",
+                        value: "\(taskManager.getActiveTasks().count)",
+                        color: CyberpunkTheme.accentPurple
+                    )
+                    
+                    if pomodoroEngine.isRunning {
+                        StatBadge(
+                            icon: "timer",
+                            value: formatTime(pomodoroEngine.remainingTime),
+                            color: CyberpunkTheme.accentCyan
+                        )
                     }
                 }
             }
-            
-            Spacer()
-            
-            // Search bar
-            searchBar
-            
-            // Model selector
-            ModelSelectorView(llmSummarizer: llmSummarizer)
-            
-            // Quick stats
-            HStack(spacing: CyberpunkTheme.spacingM) {
-                StatBadge(
-                    icon: "checklist",
-                    value: "\(taskManager.getActiveTasks().count)",
-                    color: CyberpunkTheme.accentPurple
-                )
-                
-                if pomodoroEngine.isRunning {
-                    StatBadge(
-                        icon: "timer",
-                        value: formatTime(pomodoroEngine.remainingTime),
-                        color: CyberpunkTheme.accentCyan
-                    )
-                }
-            }
+            .padding(.horizontal, CyberpunkTheme.spacingM)
+            .padding(.vertical, CyberpunkTheme.spacingS)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .padding(.horizontal, CyberpunkTheme.spacingM)
-        .padding(.vertical, CyberpunkTheme.spacingS)
+        .frame(height: 48)
         .background(CyberpunkTheme.backgroundSecondary)
     }
     
@@ -588,24 +599,30 @@ public struct MainWindowView: View {
     }
 }
 
-/// Tab button component
+/// Tab button component with responsive text/icon display
 struct TabButton: View {
     let tab: NavigationTab
     let isSelected: Bool
+    let showText: Bool
     let action: () -> Void
     
     @State private var isHovered = false
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: CyberpunkTheme.spacingS) {
+            HStack(spacing: showText ? CyberpunkTheme.spacingS : 0) {
                 Image(systemName: tab.icon)
                     .font(.system(size: 16))
-                Text(tab.rawValue)
-                    .font(CyberpunkTheme.fontHeadline)
+                
+                if showText {
+                    Text(tab.rawValue)
+                        .font(CyberpunkTheme.fontHeadline)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
             }
             .foregroundColor(isSelected ? tab.color : CyberpunkTheme.textSecondary)
-            .padding(.horizontal, CyberpunkTheme.spacingM)
+            .padding(.horizontal, showText ? CyberpunkTheme.spacingM : CyberpunkTheme.spacingS)
             .padding(.vertical, CyberpunkTheme.spacingS)
             .background(
                 RoundedRectangle(cornerRadius: CyberpunkTheme.cornerRadiusM)
@@ -621,6 +638,7 @@ struct TabButton: View {
         .onHover { hovering in
             isHovered = hovering
         }
+        .help(tab.rawValue)
     }
 }
 
