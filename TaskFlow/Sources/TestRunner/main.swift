@@ -2,14 +2,14 @@ import Foundation
 import AppKit
 import TaskFlowLib
 
-// Helper for string multiplication
+// Helper for string multiplication (lightweight banner formatting)
 extension String {
     static func * (left: String, right: Int) -> String {
         String(repeating: left, count: right)
     }
 }
 
-// Helper to create test images
+// Helper to create test images for screenshot/OCR property tests.
 func createTestImage(width: Int, height: Int, color: NSColor = .red) -> NSImage {
     let image = NSImage(size: NSSize(width: width, height: height))
     image.lockFocus()
@@ -19,7 +19,7 @@ func createTestImage(width: Int, height: Int, color: NSColor = .red) -> NSImage 
     return image
 }
 
-// Helper to create test image with text (for OCR testing)
+// Helper to create test image with text (for OCR testing).
 func createTestImageWithText(_ text: String, width: Int = 400, height: Int = 100) -> NSImage {
     let image = NSImage(size: NSSize(width: width, height: height))
     image.lockFocus()
@@ -89,7 +89,8 @@ var allTests: [() -> PropertyTestResult] = [
 // **Validates: Requirements 1.1, 1.2**
 // ============================================================
 
-/// Compare two tasks for equivalence (ignoring minor date differences)
+/// Compare two tasks for equivalence (ignoring minor date differences).
+/// This keeps persistence tests stable when storage layers normalize timestamps.
 func tasksAreEquivalent(_ t1: Task, _ t2: Task) -> Bool {
     return t1.id == t2.id &&
            t1.title == t2.title &&
@@ -106,7 +107,7 @@ func tasksAreEquivalent(_ t1: Task, _ t2: Task) -> Bool {
            t1.metadata.keywords == t2.metadata.keywords
 }
 
-// Initialize in-memory database for testing
+// Initialize in-memory database for testing so property tests do not touch user data.
 do {
     try DatabaseManager.shared.initializeInMemory()
     let persistenceManager = PersistenceManager()
@@ -957,7 +958,7 @@ do {
     }
     
     // ============================================================
-    // Property 6: Bulk Deletion Moves to Deleted Column
+    // Property 15: Bulk Deletion Moves to Deleted Column
     // Feature: multi-select-outlook-integration
     // *For any* set of selected cards, confirming deletion SHALL move all selected cards
     // to the Deleted column and clear the selection set.

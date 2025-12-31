@@ -20,7 +20,7 @@ public struct AppInfo {
     /// - PATCH: Bug fixes (backwards compatible)
     public static let version = "1.2.0"
     
-    /// Build number (increments with each build)
+    /// Build number (increments with each CI build or release candidate)
     public static let build = "7"
     
     /// Copyright year
@@ -38,12 +38,12 @@ public struct AppInfo {
     /// Bundle identifier
     public static let bundleIdentifier = "com.pezz.taskflow"
     
-    /// Full version string
+    /// Full version string for About panels and diagnostics
     public static var fullVersion: String {
         "\(version) (\(build))"
     }
     
-    /// Legal notice
+    /// Legal notice shown in About panels and license dialogs
     public static let legalNotice = """
         TaskFlow is proprietary software.
         

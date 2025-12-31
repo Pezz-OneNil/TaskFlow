@@ -10,6 +10,11 @@
 import SwiftUI
 import TaskFlowLib
 
+private extension Notification.Name {
+    /// Posted when the user triggers a capture from the menu bar or command menu.
+    static let menuBarCaptureRequested = Notification.Name("MenuBarCaptureRequested")
+}
+
 @main
 struct TaskFlowApp: App {
     @StateObject private var appState = AppState()
@@ -40,13 +45,13 @@ struct TaskFlowApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("New Task") {
-                    // TODO: Trigger new task creation
+                    // TODO: Wire into the shared task-creation flow once the editor view is exposed here.
                 }
                 .keyboardShortcut("n", modifiers: .command)
                 
                 Button("Capture Screen") {
                     NotificationCenter.default.post(
-                        name: NSNotification.Name("MenuBarCaptureRequested"),
+                        name: .menuBarCaptureRequested,
                         object: nil
                     )
                 }
@@ -59,7 +64,7 @@ struct TaskFlowApp: App {
         MenuBarManager.shared.setup {
             // Post notification to trigger capture from menu bar
             NotificationCenter.default.post(
-                name: NSNotification.Name("MenuBarCaptureRequested"),
+                name: .menuBarCaptureRequested,
                 object: nil
             )
         }
@@ -103,20 +108,20 @@ class AppState: ObservableObject {
     }
     
     func initialize() {
-        // Check permissions
+        // Check permissions early so downstream features can fail fast.
         permissionManager.checkPermissions()
         
-        // Start daily backup scheduler
+        // Start daily backup scheduler to keep user data durable.
         backupManager.startDailyBackupSchedule()
         
-        // Validate and restore from backup if needed
+        // Validate and restore from backup if needed before the UI begins heavy work.
         do {
             _ = try backupManager.validateAndRecover()
         } catch {
             print("Backup validation failed: \(error)")
         }
         
-        // Pre-warm LLM model in background for faster first capture
+        // Pre-warm LLM model in background for faster first capture.
         _Concurrency.Task {
             await llmSummarizer.warmup()
         }
@@ -124,7 +129,7 @@ class AppState: ObservableObject {
     
     private func setupPomodoroCallbacks() {
         pomodoroEngine.onSessionExpired = {
-            // TODO: Show notification
+            // TODO: Show a user-visible notification once the in-app notifier is wired up.
             print("Pomodoro session expired")
         }
         
