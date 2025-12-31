@@ -1189,14 +1189,14 @@ The installer script (`install-taskflow.sh`) provides:
 The `create-dmg.sh` script creates a distributable DMG:
 
 ```bash
-cd TaskerApp/TaskFlow/Installer
+cd TaskFlowMac/TaskFlow/Installer
 ./create-dmg.sh
 ```
 
 This will:
 1. Build TaskFlow.app if not present
 2. Create a DMG containing the app and installer
-3. Output to `TaskerApp/TaskFlow/dist/TaskFlow-Installer-1.0.0.dmg`
+3. Output to `TaskFlowMac/TaskFlow/dist/TaskFlow-Installer-1.0.0.dmg`
 
 ### Offline Operation
 

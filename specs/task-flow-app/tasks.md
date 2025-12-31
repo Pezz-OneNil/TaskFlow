@@ -515,7 +515,7 @@ All features implemented and working including:
 ## Build Commands
 
 ```bash
-cd TaskerApp/TaskFlow
+cd TaskFlowMac/TaskFlow
 swift build -c release
 ./build-app.sh
 cp -r TaskFlow.app /Applications/
@@ -526,10 +526,10 @@ open /Applications/TaskFlow.app
 
 ```bash
 # Create distributable DMG
-cd TaskerApp/TaskFlow/Installer
+cd TaskFlowMac/TaskFlow/Installer
 ./create-dmg.sh
 
-# Output: TaskerApp/TaskFlow/dist/TaskFlow-Installer-1.0.0.dmg
+# Output: TaskFlowMac/TaskFlow/dist/TaskFlow-Installer-1.0.0.dmg
 ```
 
 The DMG contains:
