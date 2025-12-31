@@ -1,310 +1,207 @@
-<![CDATA[<div align="center">
+<div align="center">
 
-# ⚡ TASKFLOW ⚡
+# ⚡ TaskFlow
 
-<img src="Resources/AppIcon_transparent.png" alt="TaskFlow Logo" width="180" height="180">
+<img src="Resources/AppIcon_transparent.png" alt="TaskFlow Logo" width="150" height="150">
 
-### 「 INTELLIGENT TASK MANAGEMENT FOR macOS 」
+### Intelligent Task Management for macOS
 
 *Capture • Organize • Conquer*
 
-[![Version](https://img.shields.io/badge/VERSION-1.2.0-00F5FF?style=for-the-badge&labelColor=0D0D0D)](../../releases)
-[![Platform](https://img.shields.io/badge/macOS-13%2B-FF006E?style=for-the-badge&labelColor=0D0D0D)](https://www.apple.com/macos/)
-[![Swift](https://img.shields.io/badge/SWIFT-5.9-FFE66D?style=for-the-badge&labelColor=0D0D0D)](https://swift.org)
-[![License](https://img.shields.io/badge/LICENSE-Proprietary-9D4EDD?style=for-the-badge&labelColor=0D0D0D)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.2.0-00F5FF?style=flat-square&labelColor=1a1a2e)](../../releases)
+[![Platform](https://img.shields.io/badge/macOS-13+-FF006E?style=flat-square&labelColor=1a1a2e)](https://www.apple.com/macos/)
+[![Swift](https://img.shields.io/badge/Swift-5.9-FFE66D?style=flat-square&labelColor=1a1a2e)](https://swift.org)
+[![License](https://img.shields.io/badge/license-Proprietary-9D4EDD?style=flat-square&labelColor=1a1a2e)](LICENSE)
 
 ---
 
-```
-╔══════════════════════════════════════════════════════════════════╗
-║  ████████╗ █████╗ ███████╗██╗  ██╗███████╗██╗      ██████╗ ██╗    ║
-║  ╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝██╔════╝██║     ██╔═══██╗██║    ║
-║     ██║   ███████║███████╗█████╔╝ █████╗  ██║     ██║   ██║██║    ║
-║     ██║   ██╔══██║╚════██║██╔═██╗ ██╔══╝  ██║     ██║   ██║██║    ║
-║     ██║   ██║  ██║███████║██║  ██╗██║     ███████╗╚██████╔╝███████║
-║     ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝ ╚══════╝
-╚══════════════════════════════════════════════════════════════════╝
-```
+**A cyberpunk-themed productivity app with AI-powered task capture, Kanban boards, annual calendar planning, and Pomodoro timer.**
 
 </div>
 
 ---
 
-## 🌆 FEATURES
+## ✨ Features
 
-<table>
-<tr>
-<td width="50%">
+### 📋 Kanban Board
+Organize tasks with a beautiful drag-and-drop board featuring responsive columns:
+- **Backlog** → **To Do** → **In Progress** → **Done** → **Deleted**
+- Columns resize proportionally to fit any window size
+- All columns always visible - no hidden workflow stages
 
-### 📋 KANBAN BOARD
-```
-┌─────────┬─────────┬─────────┐
-│ BACKLOG │ TO DO   │ IN PROG │
-├─────────┼─────────┼─────────┤
-│ ▓▓▓▓▓▓▓ │ ▓▓▓▓▓▓▓ │ ▓▓▓▓▓▓▓ │
-│ ▓▓▓▓▓▓▓ │ ▓▓▓▓▓▓▓ │         │
-│         │         │         │
-└─────────┴─────────┴─────────┘
-```
-Drag-and-drop task management with responsive columns that adapt to any window size.
+### 📅 Annual Calendar *(New in v1.2.0)*
+Plan your entire year at a glance:
+- **12-month grid layout** with day-of-week indicators
+- **10 cyberpunk color categories** for event organization
+- **Drag-to-move** events to reschedule instantly
+- **Drag-to-resize** events by pulling the edge
+- **Task activity indicators** showing ↑added and ↓completed per day
+- **Multi-event popover** to access all events on busy days
+- **Keyboard navigation** with arrow keys, Enter, and Escape
 
-</td>
-<td width="50%">
-
-### 📅 ANNUAL CALENDAR
-```
-┌───┬───┬───┬───┬───┬───┐
-│JAN│FEB│MAR│APR│MAY│JUN│
-├───┼───┼───┼───┼───┼───┤
-│▓▓▓│   │▓▓▓▓▓▓▓│   │▓▓▓│
-│   │▓▓▓│       │▓▓▓│   │
-└───┴───┴───┴───┴───┴───┘
-```
-Full year planning with 10 cyberpunk color categories, drag-to-move, and drag-to-resize events.
-
-</td>
-</tr>
-<tr>
-<td>
-
-### 📸 SCREENSHOT CAPTURE
+### 📸 Screenshot Capture
 Press `⌘⇧C` to capture any screen area. Screenshots auto-attach to new tasks for visual context.
 
-</td>
-<td>
+### 🤖 AI-Powered Task Titles
+Local LLM generates smart, action-oriented task titles from your screenshots. Runs 100% offline via Ollama - your data never leaves your Mac.
 
-### 🤖 AI-POWERED TITLES
-Local LLM generates smart task titles from screenshots. 100% offline via Ollama.
-
-</td>
-</tr>
-<tr>
-<td>
-
-### ⏱️ POMODORO TIMER
+### ⏱️ Pomodoro Timer
 Built-in time tracking with configurable work/break intervals and visual countdown.
 
-</td>
-<td>
-
-### 📧 OUTLOOK INTEGRATION
-Drag `.eml` files to create tasks from emails. Extracts subject and content automatically.
-
-</td>
-</tr>
-</table>
+### 📧 Outlook Integration
+Drag `.eml` files directly into TaskFlow to create tasks from emails.
 
 ---
 
-## 🎨 CYBERPUNK AESTHETIC
+## 🎨 Cyberpunk Color Palette
 
-<div align="center">
-
-| Color | Name | Hex |
-|:---:|:---|:---:|
-| 🟣 | Neon Pink | `#FF006E` |
-| 🔵 | Electric Blue | `#00F5FF` |
-| 🟢 | Acid Green | `#39FF14` |
-| 🟠 | Hot Orange | `#FF6B35` |
-| 🟣 | Deep Purple | `#9D4EDD` |
-| 🟡 | Golden Yellow | `#FFE66D` |
-| 🔴 | Crimson Red | `#DC143C` |
-| 🟢 | Mint Green | `#00FF7F` |
-| 🔵 | Sky Blue | `#87CEEB` |
-| 🟣 | Lavender | `#E6E6FA` |
-
-</div>
+| Category | Color | Hex Code |
+|:---------|:------|:---------|
+| Neon Pink | 🟣 | `#FF006E` |
+| Electric Blue | 🔵 | `#00F5FF` |
+| Acid Green | 🟢 | `#39FF14` |
+| Hot Orange | 🟠 | `#FF6B35` |
+| Deep Purple | 🟣 | `#9D4EDD` |
+| Golden Yellow | 🟡 | `#FFE66D` |
+| Crimson Red | 🔴 | `#DC143C` |
+| Mint Green | 🟢 | `#00FF7F` |
+| Sky Blue | 🔵 | `#87CEEB` |
+| Lavender | 🟣 | `#E6E6FA` |
 
 ---
 
-## 🔒 PRIVACY FIRST
-
-```
-╔═══════════════════════════════════════════════════════════╗
-║  ██████╗ ███████╗███████╗██╗     ██╗███╗   ██╗███████╗   ║
-║ ██╔═══██╗██╔════╝██╔════╝██║     ██║████╗  ██║██╔════╝   ║
-║ ██║   ██║█████╗  █████╗  ██║     ██║██╔██╗ ██║█████╗     ║
-║ ██║   ██║██╔══╝  ██╔══╝  ██║     ██║██║╚██╗██║██╔══╝     ║
-║ ╚██████╔╝██║     ██║     ███████╗██║██║ ╚████║███████╗   ║
-║  ╚═════╝ ╚═╝     ╚═╝     ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝   ║
-╚═══════════════════════════════════════════════════════════╝
-```
+## 🔒 Privacy First
 
 - **Local SQLite Database** — All data stays on your Mac
 - **On-Device AI** — Ollama runs entirely locally
 - **Zero Telemetry** — No tracking, no cloud sync, no data collection
-- **Full Backup Control** — Export/import your data anytime
+- **Full Backup Control** — Export/import your data anytime (now includes calendar events!)
 
 ---
 
-## 📥 INSTALLATION
+## 📥 Installation
 
 ### Requirements
-```
-┌────────────────────────────────────┐
-│ • macOS 13 (Ventura) or later      │
-│ • Apple Silicon or Intel Mac       │
-│ • 5GB free space (for AI model)    │
-└────────────────────────────────────┘
-```
+- macOS 13 (Ventura) or later
+- Apple Silicon (M1/M2/M3) or Intel Mac
+- 5GB free disk space (for AI model)
 
 ### Quick Install
-1. Download the latest DMG from [**Releases**](../../releases)
-2. Open DMG → Drag `TaskFlow.app` to Applications
+1. Download the latest DMG from [Releases](../../releases)
+2. Open the DMG and drag `TaskFlow.app` to Applications
 3. Right-click → **Open** (required for first launch)
 4. Grant Screen Recording permission when prompted
 
-### Full Install (with AI)
+### Full Install (with AI Features)
 ```bash
-# Open the DMG and run:
+# Open the DMG and run the installer script:
 ./install-taskflow.sh
 ```
 The installer sets up Ollama and downloads the AI model automatically.
 
-> ⚠️ **First Launch:** macOS may show *"Apple could not verify TaskFlow"*  
-> This is normal. Right-click → Open → Click Open in the dialog.
+> **Note:** macOS may show *"Apple could not verify TaskFlow"* on first launch. This is normal for apps outside the App Store. Right-click → Open → Click Open.
 
 ---
 
-## ⌨️ KEYBOARD SHORTCUTS
-
-<div align="center">
+## ⌨️ Keyboard Shortcuts
 
 | Shortcut | Action |
-|:---:|:---|
-| `⌘⇧C` | Capture screenshot |
+|:---------|:-------|
+| `⌘⇧C` | Capture screenshot for new task |
 | `⌘N` | New task |
-| `⌘,` | Settings |
-| `⌘Q` | Quit |
-| `←` `→` `↑` `↓` | Navigate calendar |
-| `Enter` | Create/edit event |
-| `Escape` | Cancel/deselect |
-
-</div>
+| `⌘,` | Open settings |
+| `⌘Q` | Quit TaskFlow |
+| `← → ↑ ↓` | Navigate calendar days |
+| `Enter` | Create/edit calendar event |
+| `Escape` | Cancel or deselect |
 
 ---
 
-## 🛠️ BUILD FROM SOURCE
+## 🛠️ Building from Source
 
 ```bash
-# Clone
+# Clone the repository
 git clone https://github.com/Pezz-OneNil/TaskFlow.git
 cd TaskFlow/TaskFlow
 
-# Build release
+# Build release version
 swift build -c release
 
-# Build app bundle + DMG
+# Build app bundle with DMG
 ./build-app.sh --dmg
 
-# Install
+# Install to Applications
 cp -r TaskFlow.app /Applications/
 ```
 
 ---
 
-## 📁 PROJECT STRUCTURE
+## 📁 Project Structure
 
 ```
 TaskFlow/
 ├── Sources/
-│   ├── TaskFlow/           # App entry point
+│   ├── TaskFlow/           # Main app entry point
 │   └── TaskFlowLib/        # Core library
 │       ├── Models/         # Data models
 │       ├── Views/          # SwiftUI views
 │       ├── Services/       # Business logic
 │       └── Persistence/    # Database layer
 ├── Tests/                  # Unit & property tests
-├── Resources/              # Icons & assets
-└── Installer/              # DMG scripts
+├── Resources/              # App icons & assets
+└── Installer/              # DMG creation scripts
 ```
 
 ---
 
-## 📜 VERSION HISTORY
+## 📜 Version History
 
-<div align="center">
+### v1.2.0 (Current)
+- ✨ **Annual Calendar** — Full year planning with colored events
+- 🎨 **10 Cyberpunk Categories** — Customizable event colors
+- 🖱️ **Drag-to-Move** — Reschedule events by dragging
+- ↔️ **Drag-to-Resize** — Extend/shrink events by dragging edge
+- 📊 **Task Activity Indicators** — See ↑added/↓completed per day
+- 📋 **Multi-Event Popover** — Access all events on busy days
+- 💾 **Calendar Backup** — Events included in backup/restore
+- 📱 **Responsive Tab Bar** — Icons-only mode at narrow widths
+- 📐 **Responsive Kanban** — Equal-width columns at any size
+- ⌨️ **Keyboard Navigation** — Arrow keys, Enter, Escape
 
-### `v1.2.0` — CURRENT
+### v1.1.0
+- 📧 Outlook email integration
+- 🎯 Multi-select task deletion
+- 🐛 Bug fixes and performance improvements
 
-</div>
-
-```diff
-+ Annual Calendar — Full year planning with colored events
-+ 10 Cyberpunk Categories — Customizable event colors
-+ Drag-to-Move Events — Reschedule by dragging
-+ Drag-to-Resize Events — Extend/shrink duration by dragging edge
-+ Task Activity Indicators — See ↑added/↓completed per day
-+ Multi-Event Day Popover — Access all events on busy days
-+ Calendar Backup Integration — Events included in backups
-+ Responsive Tab Bar — Icons-only mode at narrow widths
-+ Responsive Kanban — Equal-width columns at any size
-+ Keyboard Navigation — Arrow keys, Enter, Escape
-```
-
-<div align="center">
-
-### `v1.1.0`
-
-</div>
-
-```diff
-+ Outlook email integration
-+ Multi-select task deletion
-+ Bug fixes & performance improvements
-```
-
-<div align="center">
-
-### `v1.0.0`
-
-</div>
-
-```diff
-+ Initial release
-+ Kanban board with drag-and-drop
-+ Screenshot capture
-+ AI-powered task titles
-+ Pomodoro timer
-```
+### v1.0.0
+- 🚀 Initial release
+- 📋 Kanban board with drag-and-drop
+- 📸 Screenshot capture
+- 🤖 AI-powered task titles
+- ⏱️ Pomodoro timer
 
 ---
 
-## 📄 LICENSE
+## 📄 License
 
-```
-╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║
-║   TaskFlow is proprietary software.                               ║
-║                                                                   ║
-║   © 2025 Pezz. All rights reserved.                               ║
-║                                                                   ║
-║   This software is protected by copyright law and international   ║
-║   treaties. Unauthorized copying, modification, distribution,     ║
-║   or use is strictly prohibited.                                  ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
-```
+**TaskFlow is proprietary software.**
+
+© 2025 Pezz. All rights reserved.
+
+This software is protected by copyright law and international treaties. Unauthorized copying, modification, distribution, or use of this software is strictly prohibited.
 
 ---
 
-## 🙏 ACKNOWLEDGMENTS
+## 🙏 Acknowledgments
 
-- [**GRDB.swift**](https://github.com/groue/GRDB.swift) — SQLite toolkit
-- [**Ollama**](https://ollama.ai) — Local LLM runtime
-- [**Google Gemma**](https://ai.google.dev/gemma) — AI model
+- [GRDB.swift](https://github.com/groue/GRDB.swift) — SQLite toolkit for Swift
+- [Ollama](https://ollama.ai) — Local LLM runtime
+- [Google Gemma](https://ai.google.dev/gemma) — AI model for task title generation
 
 ---
 
 <div align="center">
 
-```
-═══════════════════════════════════════════════════════════════
-                Made with ⚡ for productivity enthusiasts
-═══════════════════════════════════════════════════════════════
-```
-
-**[⬆ Back to Top](#-taskflow-)**
+**Made with ⚡ for productivity enthusiasts**
 
 </div>
-]]>
