@@ -216,11 +216,11 @@ public final class TaskManager: TaskManagerProtocol, ObservableObject {
         updateTask(updatedTask)
     }
     
-    /// Restore a task from deleted state
+    /// Restore a task from deleted state (returns to active list without a Kanban column)
     public func restoreFromDeleted(_ task: Task) {
         var updatedTask = task
         updatedTask.status = .pending
-        updatedTask.kanbanColumn = .backlog
+        updatedTask.kanbanColumn = nil
         updatedTask.updatedAt = Date()
         updateTask(updatedTask)
     }
