@@ -94,23 +94,31 @@ public struct KanbanBoardView: View {
                 .padding(.top, CyberpunkTheme.spacingS)
             }
             
-            // Columns
-            HStack(alignment: .top, spacing: CyberpunkTheme.spacingM) {
-                ForEach(KanbanColumn.allCases, id: \.self) { column in
-                    KanbanColumnView(
-                        column: column,
-                        tasks: tasksForColumn(column),
-                        taskManager: taskManager,
-                        onMoveColumn: onMoveColumn,
-                        onMoveToActive: onMoveToActive,
-                        onComplete: onComplete,
-                        onRestore: onRestore,
-                        onPermanentDelete: onPermanentDelete,
-                        onEdit: onEdit
-                    )
+            // Columns - use GeometryReader for equal width distribution
+            GeometryReader { geometry in
+                let columnCount = CGFloat(KanbanColumn.allCases.count)
+                let totalSpacing = CyberpunkTheme.spacingM * (columnCount - 1) + CyberpunkTheme.spacingM * 2 // spacing between + padding
+                let availableWidth = geometry.size.width - totalSpacing
+                let columnWidth = max(140, availableWidth / columnCount) // Minimum 140px per column
+                
+                HStack(alignment: .top, spacing: CyberpunkTheme.spacingM) {
+                    ForEach(KanbanColumn.allCases, id: \.self) { column in
+                        KanbanColumnView(
+                            column: column,
+                            tasks: tasksForColumn(column),
+                            taskManager: taskManager,
+                            onMoveColumn: onMoveColumn,
+                            onMoveToActive: onMoveToActive,
+                            onComplete: onComplete,
+                            onRestore: onRestore,
+                            onPermanentDelete: onPermanentDelete,
+                            onEdit: onEdit
+                        )
+                        .frame(width: columnWidth)
+                    }
                 }
+                .padding(.horizontal, CyberpunkTheme.spacingM)
             }
-            .padding(.horizontal, CyberpunkTheme.spacingM)
             .padding(.top, CyberpunkTheme.spacingS)
         }
         .background(CyberpunkTheme.backgroundPrimary)
@@ -244,7 +252,7 @@ public struct KanbanColumnView: View {
                 .padding(CyberpunkTheme.spacingS)
             }
         }
-        .frame(minWidth: 180, maxWidth: .infinity)
+        .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: CyberpunkTheme.cornerRadiusL)
                 .fill(CyberpunkTheme.backgroundSecondary)

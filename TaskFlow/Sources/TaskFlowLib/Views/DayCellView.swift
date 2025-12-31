@@ -12,11 +12,17 @@ public struct DayCellView: View {
     let isSelected: Bool
     let onTap: () -> Void
     let onEventTap: (CalendarEvent) -> Void
+    var onEventMove: ((CalendarEvent, Date) -> Void)?
+    var onEventResize: ((CalendarEvent, Date) -> Void)?
     
     @State private var isHovered = false
     
     private let calendar = Calendar.current
     private let dayOfWeekNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    
+    // Increased cell dimensions for better visibility
+    static let cellWidth: CGFloat = 80
+    static let cellHeight: CGFloat = 32
     
     public init(
         date: Date,
@@ -26,7 +32,9 @@ public struct DayCellView: View {
         categoryManager: EventCategoryManager,
         isSelected: Bool = false,
         onTap: @escaping () -> Void,
-        onEventTap: @escaping (CalendarEvent) -> Void
+        onEventTap: @escaping (CalendarEvent) -> Void,
+        onEventMove: ((CalendarEvent, Date) -> Void)? = nil,
+        onEventResize: ((CalendarEvent, Date) -> Void)? = nil
     ) {
         self.date = date
         self.day = day
@@ -36,6 +44,8 @@ public struct DayCellView: View {
         self.isSelected = isSelected
         self.onTap = onTap
         self.onEventTap = onEventTap
+        self.onEventMove = onEventMove
+        self.onEventResize = onEventResize
     }
     
     private var dayOfWeek: String {
@@ -50,80 +60,93 @@ public struct DayCellView: View {
     
     public var body: some View {
         ZStack(alignment: .topLeading) {
-            // Background
+            // Background - clickable area for creating new events
             Rectangle()
                 .fill(backgroundColor)
-                .frame(width: 70, height: 24)
-            
-            // Event blocks (stacked)
-            HStack(spacing: 1) {
-                ForEach(events.prefix(3), id: \.id) { event in
-                    EventBlockView(
-                        event: event,
-                        category: categoryManager.category(for: event.categoryId),
-                        isCompact: true,
-                        onTap: { onEventTap(event) }
-                    )
+                .frame(width: Self.cellWidth, height: Self.cellHeight)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    onTap()
                 }
-                
-                if events.count > 3 {
-                    Text("+\(events.count - 3)")
+            
+            // Day info overlay (top-left)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 2) {
+                    Text("\(day)")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(isWeekend ? CyberpunkTheme.accentMagenta : CyberpunkTheme.textPrimary)
+                    
+                    Text(dayOfWeek)
                         .font(.system(size: 8))
                         .foregroundColor(CyberpunkTheme.textTertiary)
                 }
+                .padding(.leading, 3)
+                .padding(.top, 2)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 2)
-            
-            // Day number and weekday
-            HStack(spacing: 2) {
-                Text("\(day)")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(isWeekend ? CyberpunkTheme.accentMagenta : CyberpunkTheme.textPrimary)
-                
-                Text(dayOfWeek)
-                    .font(.system(size: 7))
-                    .foregroundColor(CyberpunkTheme.textTertiary)
-            }
-            .padding(.leading, 2)
-            .padding(.top, 2)
             
             // Activity indicators (top right corner)
             if let stats = stats, stats.hasActivity {
-                HStack(spacing: 2) {
+                HStack(spacing: 3) {
                     if stats.tasksAdded > 0 {
-                        HStack(spacing: 0) {
+                        HStack(spacing: 1) {
                             Text("↑")
-                                .font(.system(size: 7))
+                                .font(.system(size: 8, weight: .bold))
                                 .foregroundColor(CyberpunkTheme.accentCyan)
                             Text("\(stats.tasksAdded)")
-                                .font(.system(size: 7))
+                                .font(.system(size: 8, weight: .medium))
                                 .foregroundColor(CyberpunkTheme.accentCyan)
                         }
                     }
                     
                     if stats.tasksCompleted > 0 {
-                        HStack(spacing: 0) {
+                        HStack(spacing: 1) {
                             Text("↓")
-                                .font(.system(size: 7))
+                                .font(.system(size: 8, weight: .bold))
                                 .foregroundColor(CyberpunkTheme.accentPurple)
                             Text("\(stats.tasksCompleted)")
-                                .font(.system(size: 7))
+                                .font(.system(size: 8, weight: .medium))
                                 .foregroundColor(CyberpunkTheme.accentPurple)
                         }
                     }
                 }
-                .padding(.trailing, 2)
+                .padding(.trailing, 3)
                 .padding(.top, 2)
                 .frame(maxWidth: .infinity, alignment: .trailing)
             }
+            
+            // Event blocks (bottom area) - larger and more visible
+            if !events.isEmpty {
+                VStack(spacing: 1) {
+                    Spacer()
+                    
+                    HStack(spacing: 2) {
+                        ForEach(events.prefix(2), id: \.id) { event in
+                            EventBlockView(
+                                event: event,
+                                category: categoryManager.category(for: event.categoryId),
+                                isCompact: true,
+                                onTap: { onEventTap(event) },
+                                onMove: onEventMove,
+                                onResize: onEventResize
+                            )
+                            .frame(maxWidth: .infinity)
+                        }
+                        
+                        if events.count > 2 {
+                            Text("+\(events.count - 2)")
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(CyberpunkTheme.accentYellow)
+                                .padding(.horizontal, 3)
+                        }
+                    }
+                    .padding(.horizontal, 2)
+                    .padding(.bottom, 2)
+                }
+            }
         }
-        .frame(width: 70, height: 24)
+        .frame(width: Self.cellWidth, height: Self.cellHeight)
         .onHover { hovering in
             isHovered = hovering
-        }
-        .onTapGesture {
-            onTap()
         }
         .overlay(
             Rectangle()
@@ -137,20 +160,12 @@ public struct DayCellView: View {
         } else if isHovered {
             return CyberpunkTheme.accentYellow.opacity(0.5)
         }
-        return Color.clear
+        return CyberpunkTheme.backgroundTertiary.opacity(0.5)
     }
     
     private var backgroundColor: Color {
         if isSelected {
             return CyberpunkTheme.accentYellow.opacity(0.2)
-        }
-        
-        if !events.isEmpty {
-            // Show first event's category color as subtle background
-            if let firstEvent = events.first,
-               let category = categoryManager.category(for: firstEvent.categoryId) {
-                return category.color.color.opacity(0.15)
-            }
         }
         
         if isHovered {

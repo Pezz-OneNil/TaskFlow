@@ -18,10 +18,10 @@ public struct AppInfo {
     /// - MAJOR: Breaking changes
     /// - MINOR: New features (backwards compatible)
     /// - PATCH: Bug fixes (backwards compatible)
-    public static let version = "1.1.0"
+    public static let version = "1.2.0"
     
     /// Build number (increments with each build)
-    public static let build = "6"
+    public static let build = "7"
     
     /// Copyright year
     public static let copyrightYear = "2025"

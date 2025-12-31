@@ -169,6 +169,42 @@ public struct AnnualCalendarView: View {
         showingEventEditor = true
     }
     
+    // MARK: - Event Drag & Drop
+    
+    /// Move an event to a new start date (preserving duration)
+    private func moveEvent(_ event: CalendarEvent, to newStartDate: Date) {
+        let duration = calendar.dateComponents([.day], from: event.startDate, to: event.endDate).day ?? 0
+        guard let newEndDate = calendar.date(byAdding: .day, value: duration, to: newStartDate) else { return }
+        
+        let updatedEvent = CalendarEvent(
+            id: event.id,
+            categoryId: event.categoryId,
+            startDate: newStartDate,
+            endDate: newEndDate,
+            label: event.label,
+            createdAt: event.createdAt,
+            updatedAt: Date()
+        )
+        eventManager.updateEvent(updatedEvent)
+    }
+    
+    /// Resize an event by changing its end date
+    private func resizeEvent(_ event: CalendarEvent, to newEndDate: Date) {
+        // Ensure end date is not before start date
+        let finalEndDate = newEndDate >= event.startDate ? newEndDate : event.startDate
+        
+        let updatedEvent = CalendarEvent(
+            id: event.id,
+            categoryId: event.categoryId,
+            startDate: event.startDate,
+            endDate: finalEndDate,
+            label: event.label,
+            createdAt: event.createdAt,
+            updatedAt: Date()
+        )
+        eventManager.updateEvent(updatedEvent)
+    }
+    
     // MARK: - Header View
     
     private var headerView: some View {
@@ -184,6 +220,13 @@ public struct AnnualCalendarView: View {
                 selectedYear: $selectedYear,
                 yearRange: yearRange
             )
+            
+            Spacer()
+            
+            // Help text
+            Text("Drag events to move • Drag bottom edge to resize")
+                .font(.system(size: 10))
+                .foregroundColor(CyberpunkTheme.textTertiary)
             
             Spacer()
             
@@ -232,7 +275,9 @@ public struct AnnualCalendarView: View {
                     onEventTap: { event in
                         editingEvent = event
                         showingEventEditor = true
-                    }
+                    },
+                    onEventMove: moveEvent,
+                    onEventResize: resizeEvent
                 )
             }
         }
