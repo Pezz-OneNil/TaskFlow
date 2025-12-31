@@ -29,6 +29,7 @@ public enum NavigationTab: String, CaseIterable {
     case tasks = "Tasks"
     case pomodoro = "Pomodoro"
     case kanban = "Kanban"
+    case annual = "Annual"
     case settings = "Settings"
     
     var icon: String {
@@ -36,6 +37,7 @@ public enum NavigationTab: String, CaseIterable {
         case .tasks: return "checklist"
         case .pomodoro: return "timer"
         case .kanban: return "rectangle.3.group"
+        case .annual: return "calendar"
         case .settings: return "gearshape"
         }
     }
@@ -45,7 +47,18 @@ public enum NavigationTab: String, CaseIterable {
         case .tasks: return CyberpunkTheme.accentPurple
         case .pomodoro: return CyberpunkTheme.accentCyan
         case .kanban: return CyberpunkTheme.accentMagenta
+        case .annual: return CyberpunkTheme.accentYellow
         case .settings: return CyberpunkTheme.textSecondary
+        }
+    }
+    
+    /// Returns visible tabs based on settings
+    /// Per Requirement 1.2, 1.3
+    public static func visibleTabs(showAnnual: Bool) -> [NavigationTab] {
+        if showAnnual {
+            return [.tasks, .pomodoro, .kanban, .annual, .settings]
+        } else {
+            return [.tasks, .pomodoro, .kanban, .settings]
         }
     }
 }
@@ -56,6 +69,7 @@ public struct MainWindowView: View {
     @ObservedObject var taskManager: TaskManager
     @ObservedObject var pomodoroEngine: PomodoroEngine
     @ObservedObject var backupManager: BackupManager
+    @ObservedObject private var settingsManager = SettingsManager.shared
     @StateObject private var statusBarManager = StatusBarManager()
     @StateObject private var emailDropHandler = EmailDropHandler()
     
@@ -290,7 +304,7 @@ public struct MainWindowView: View {
     
     private var tabBar: some View {
         HStack(spacing: CyberpunkTheme.spacingL) {
-            ForEach(NavigationTab.allCases, id: \.self) { tab in
+            ForEach(NavigationTab.visibleTabs(showAnnual: settingsManager.showAnnualCalendar), id: \.self) { tab in
                 TabButton(
                     tab: tab,
                     isSelected: selectedTab == tab
@@ -436,6 +450,9 @@ public struct MainWindowView: View {
                     taskToEdit = task
                 }
             )
+            
+        case .annual:
+            AnnualCalendarView(taskManager: taskManager)
             
         case .settings:
             BackupRestoreView(

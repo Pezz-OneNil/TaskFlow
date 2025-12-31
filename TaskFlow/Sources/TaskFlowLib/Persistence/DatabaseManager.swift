@@ -11,7 +11,7 @@ import Foundation
 import GRDB
 
 /// Current schema version - increment when adding migrations
-public let CURRENT_SCHEMA_VERSION = 2
+public let CURRENT_SCHEMA_VERSION = 3
 
 /// Manages SQLite database connection and schema
 public final class DatabaseManager {
@@ -182,6 +182,13 @@ public final class DatabaseManager {
                     try self.recordMigration(db, name: "v2_additional_columns", from: max(currentVersion, 1), to: 2)
                 }
                 
+                // Run v3 migrations (calendar events table)
+                if currentVersion < 3 {
+                    try self.migrateToV3(db)
+                    migrationsApplied.append("v3_calendar_events")
+                    try self.recordMigration(db, name: "v3_calendar_events", from: max(currentVersion, 2), to: 3)
+                }
+                
                 // Update schema version
                 try db.execute(
                     sql: "UPDATE schema_info SET version = ?, updated_at = ?",
@@ -293,6 +300,28 @@ public final class DatabaseManager {
         if !metadataColumns.contains("llm_generated_title") {
             try db.execute(sql: "ALTER TABLE task_metadata ADD COLUMN llm_generated_title INTEGER DEFAULT 0")
         }
+    }
+    
+    /// Migrate to v3 - add calendar_events table for Annual Calendar feature
+    private func migrateToV3(_ db: Database) throws {
+        // Create calendar_events table
+        try db.create(table: "calendar_events", ifNotExists: true) { t in
+            t.column("id", .text).primaryKey()
+            t.column("category_id", .integer).notNull()
+            t.column("start_date", .text).notNull()
+            t.column("end_date", .text).notNull()
+            t.column("label", .text).notNull()
+            t.column("created_at", .text).notNull()
+            t.column("updated_at", .text).notNull()
+        }
+        
+        // Create index for efficient date range queries
+        try db.create(
+            index: "idx_calendar_events_dates",
+            on: "calendar_events",
+            columns: ["start_date", "end_date"],
+            ifNotExists: true
+        )
     }
     
     /// Record a migration in the history table
