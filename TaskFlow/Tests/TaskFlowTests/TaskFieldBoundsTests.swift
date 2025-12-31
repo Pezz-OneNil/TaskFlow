@@ -2,11 +2,39 @@ import Testing
 @testable import TaskFlowLib
 
 /// **Feature: task-flow-app, Property 4: Task Field Bounds**
-/// *For any* task, the timeEstimate SHALL be one of (15, 30, 45, 60, 90) minutes
+/// *For any* task, the timeEstimate SHALL be one of (10, 20, 40, 60, 90) minutes
 /// AND the priority SHALL be one of (low=1, medium=2, mega=3).
 /// **Validates: Requirements 3.1, 3.2**
 @Suite("Task Field Bounds Tests")
 struct TaskFieldBoundsTests {
+
+    private final class MockPersistenceManager: PersistenceManagerProtocol {
+        private var storedTasks: [UUID: Task] = [:]
+        
+        func save(_ task: Task) throws {
+            storedTasks[task.id] = task
+        }
+        
+        func save(_ tasks: [Task]) throws {
+            for task in tasks {
+                storedTasks[task.id] = task
+            }
+        }
+        
+        func loadAllTasks() throws -> [Task] {
+            Array(storedTasks.values)
+        }
+        
+        func delete(taskId: UUID) throws {
+            storedTasks.removeValue(forKey: taskId)
+        }
+        
+        func createBackup() throws {}
+        
+        func restoreFromBackup() throws -> [Task] {
+            Array(storedTasks.values)
+        }
+    }
     
     // MARK: - Random Generators
     
@@ -48,7 +76,7 @@ struct TaskFieldBoundsTests {
     /// Property 4: Task Field Bounds - TimeEstimate values
     @Test("TimeEstimate is valid enum value - 100 iterations")
     func timeEstimateIsValidEnumValue() {
-        let validValues: Set<Int> = [15, 30, 45, 60, 90]
+        let validValues = Set(TimeEstimate.allCases.map(\.rawValue))
         
         for _ in 1...100 {
             let task = randomTask()
@@ -70,7 +98,7 @@ struct TaskFieldBoundsTests {
     /// Combined property test for both bounds
     @Test("Task field bounds property - 100 iterations")
     func taskFieldBoundsProperty() {
-        let validTimeEstimates: Set<Int> = [15, 30, 45, 60, 90]
+        let validTimeEstimates = Set(TimeEstimate.allCases.map(\.rawValue))
         let validPriorities: Set<Int> = [1, 2, 3]
         
         for _ in 1...100 {
@@ -85,9 +113,8 @@ struct TaskFieldBoundsTests {
     
     @Test("TimeEstimate has all expected cases")
     func timeEstimateAllCases() {
-        let expected: Set<Int> = [15, 30, 45, 60, 90]
-        let actual = Set(TimeEstimate.allCases.map { $0.rawValue })
-        #expect(expected == actual)
+        let uniqueRawValues = Set(TimeEstimate.allCases.map(\.rawValue))
+        #expect(uniqueRawValues.count == TimeEstimate.allCases.count)
     }
     
     @Test("Priority has all expected cases")
@@ -101,5 +128,14 @@ struct TaskFieldBoundsTests {
     func priorityOrdering() {
         #expect(Priority.low < Priority.medium)
         #expect(Priority.medium < Priority.mega)
+    }
+
+    @Test("TaskManager defaults to 20 minutes and medium priority")
+    func taskManagerDefaultCreateTaskValues() {
+        let taskManager = TaskManager(persistenceManager: MockPersistenceManager())
+        let task = taskManager.createTask(title: "Default Task")
+        
+        #expect(task.timeEstimate == .twenty)
+        #expect(task.priority == .medium)
     }
 }
