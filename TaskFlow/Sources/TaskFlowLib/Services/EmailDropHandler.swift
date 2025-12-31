@@ -201,9 +201,32 @@ public class EmailDropHandler: ObservableObject {
                         continuation.resume(returning: nil)
                     }
                 }
-            } else {
-                continuation.resume(returning: nil)
+                return
             }
+
+            let emailTypeIdentifiers = [UTType.emailMessage.identifier, "com.apple.mail.email"]
+
+            for identifier in emailTypeIdentifiers where provider.hasItemConformingToTypeIdentifier(identifier) {
+                provider.loadDataRepresentation(forTypeIdentifier: identifier) { data, error in
+                    guard let data = data else {
+                        continuation.resume(returning: nil)
+                        return
+                    }
+
+                    let tempURL = FileManager.default.temporaryDirectory
+                        .appendingPathComponent("TaskFlow-\(UUID().uuidString).eml")
+
+                    do {
+                        try data.write(to: tempURL, options: [.atomic])
+                        continuation.resume(returning: tempURL)
+                    } catch {
+                        continuation.resume(returning: nil)
+                    }
+                }
+                return
+            }
+
+            continuation.resume(returning: nil)
         }
     }
     
@@ -212,6 +235,10 @@ public class EmailDropHandler: ObservableObject {
     /// Process a single .eml file
     /// Per Requirements 2.1-2.8
     public func processEMLFile(_ url: URL) async -> EmailDropResult {
+        defer {
+            cleanupTemporaryEmailFile(at: url)
+        }
+
         do {
             // Parse the EML file
             let parsedEmail = try emlParser.parse(fileURL: url)
@@ -262,6 +289,20 @@ public class EmailDropHandler: ObservableObject {
         }
         
         return firstParagraph
+    }
+
+    private func cleanupTemporaryEmailFile(at url: URL) {
+        let filename = url.lastPathComponent
+        let tempDirectory = FileManager.default.temporaryDirectory.standardizedFileURL
+        let fileURL = url.standardizedFileURL
+
+        guard fileURL.path.hasPrefix(tempDirectory.path),
+              filename.hasPrefix("TaskFlow-"),
+              filename.hasSuffix(".eml") else {
+            return
+        }
+
+        try? FileManager.default.removeItem(at: fileURL)
     }
 }
 
