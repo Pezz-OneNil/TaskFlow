@@ -74,7 +74,7 @@ Then modify the build script to use `--keychain-profile "TaskFlow-Notarize"` ins
 ### Build Commands
 
 ```bash
-cd TaskerApp-Standalone/TaskFlow
+cd <repo>/TaskFlow
 
 # Development build (ad-hoc signing - will show Gatekeeper warning)
 ./build-app.sh
