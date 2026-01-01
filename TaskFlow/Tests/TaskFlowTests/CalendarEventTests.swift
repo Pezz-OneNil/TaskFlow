@@ -67,8 +67,8 @@ final class CalendarEventTests: XCTestCase {
                 )
             }
             
-            // Test random date in middle (if range > 0)
-            if daysToAdd > 0 {
+            // Test random date in middle (if range > 1, so there's actually a middle)
+            if daysToAdd > 1 {
                 let middleOffset = Int.random(in: 1..<daysToAdd)
                 if let middleDate = calendar.date(byAdding: .day, value: middleOffset, to: startDate) {
                     XCTAssertTrue(
