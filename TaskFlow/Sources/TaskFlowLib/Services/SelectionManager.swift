@@ -3,10 +3,10 @@ import Combine
 
 /// Manages multi-selection state for Kanban cards
 /// Per Requirements 1.1-1.7, 2.1-2.6
-public class SelectionManager: ObservableObject {
+public class TFMSelectionManager: ObservableObject {
     
     /// Shared singleton instance
-    public static let shared = SelectionManager()
+    public static let shared = TFMSelectionManager()
     
     /// Currently selected task IDs
     @Published public private(set) var selectedTaskIds: Set<UUID> = []
@@ -81,3 +81,9 @@ public class SelectionManager: ObservableObject {
         Array(selectedTaskIds)
     }
 }
+
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMSelectionManager")
+public typealias SelectionManager = TFMSelectionManager

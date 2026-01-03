@@ -8,9 +8,9 @@ import Foundation
 /// Engine for processing captured emails and extracting structured data
 /// Feature: multi-select-outlook-integration
 /// Per Requirements 5.1, 5.2, 6.1
-public final class EmailCaptureEngine {
+public final class TFMEmailCaptureEngine {
     
-    public static let shared = EmailCaptureEngine()
+    public static let shared = TFMEmailCaptureEngine()
     
     private init() {}
     
@@ -19,12 +19,12 @@ public final class EmailCaptureEngine {
     /// Process an email capture and extract structured data
     /// - Parameter capture: The raw email capture from Outlook
     /// - Returns: Processed email with parsed thread and metadata
-    public func processCapture(_ capture: EmailCapture) -> ProcessedEmail {
+    public func processCapture(_ capture: TFMEmailCapture) -> TFMProcessedEmail {
         // Parse email thread
         let messages = parseEmailThread(capture.body, sender: capture.sender, receivedDate: capture.receivedDate)
         
         // Extract metadata
-        let metadata = EmailMetadata(
+        let metadata = TFMEmailMetadata(
             sender: capture.sender,
             recipients: capture.recipients,
             subject: capture.subject,
@@ -34,7 +34,7 @@ public final class EmailCaptureEngine {
             conversationId: capture.conversationId
         )
         
-        return ProcessedEmail(
+        return TFMProcessedEmail(
             originalCapture: capture,
             messages: messages,
             metadata: metadata
@@ -45,8 +45,8 @@ public final class EmailCaptureEngine {
     
     /// Parse email body into individual messages in the thread
     /// Per Requirement 6.1
-    private func parseEmailThread(_ body: String, sender: String, receivedDate: Date) -> [EmailMessage] {
-        var messages: [EmailMessage] = []
+    private func parseEmailThread(_ body: String, sender: String, receivedDate: Date) -> [TFMCapturedEmailMessage] {
+        var messages: [TFMCapturedEmailMessage] = []
         
         // Common email thread delimiters
         let delimiters = [
@@ -87,7 +87,7 @@ public final class EmailCaptureEngine {
             ) {
                 // Save current message if we have content
                 if !currentMessageBody.isEmpty {
-                    messages.append(EmailMessage(
+                    messages.append(TFMCapturedEmailMessage(
                         sender: currentSender,
                         date: currentDate,
                         body: currentMessageBody.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -116,7 +116,7 @@ public final class EmailCaptureEngine {
             } else {
                 // If we were in a quoted section and now we're not, save it
                 if inQuotedSection && !quotedLines.isEmpty {
-                    messages.append(EmailMessage(
+                    messages.append(TFMCapturedEmailMessage(
                         sender: nil,
                         date: nil,
                         body: quotedLines.joined(separator: "\n")
@@ -131,7 +131,7 @@ public final class EmailCaptureEngine {
         
         // Add final message
         if !currentMessageBody.isEmpty {
-            messages.insert(EmailMessage(
+            messages.insert(TFMCapturedEmailMessage(
                 sender: currentSender ?? sender,
                 date: currentDate ?? receivedDate,
                 body: currentMessageBody.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -140,7 +140,7 @@ public final class EmailCaptureEngine {
         
         // Add any remaining quoted content
         if !quotedLines.isEmpty {
-            messages.append(EmailMessage(
+            messages.append(TFMCapturedEmailMessage(
                 sender: nil,
                 date: nil,
                 body: quotedLines.joined(separator: "\n")
@@ -149,7 +149,7 @@ public final class EmailCaptureEngine {
         
         // If no messages were parsed, treat entire body as single message
         if messages.isEmpty {
-            messages.append(EmailMessage(
+            messages.append(TFMCapturedEmailMessage(
                 sender: sender,
                 date: receivedDate,
                 body: body
@@ -234,7 +234,7 @@ public final class EmailCaptureEngine {
     /// Extract the most relevant content for task creation
     /// - Parameter email: Processed email
     /// - Returns: Extracted content suitable for LLM summarization
-    public func extractRelevantContent(_ email: ProcessedEmail) -> String {
+    public func extractRelevantContent(_ email: TFMProcessedEmail) -> String {
         var content = "Subject: \(email.metadata.subject)\n"
         content += "From: \(email.metadata.sender)\n"
         
@@ -263,8 +263,8 @@ public final class EmailCaptureEngine {
 
 // MARK: - Data Models
 
-/// A single message within an email thread
-public struct EmailMessage: Equatable {
+/// A single message within an email thread (for email capture)
+public struct TFMCapturedEmailMessage: Equatable {
     public let sender: String?
     public let date: Date?
     public let body: String
@@ -277,7 +277,7 @@ public struct EmailMessage: Equatable {
 }
 
 /// Metadata extracted from an email
-public struct EmailMetadata: Equatable {
+public struct TFMEmailMetadata: Equatable {
     public let sender: String
     public let recipients: [String]
     public let subject: String
@@ -306,15 +306,15 @@ public struct EmailMetadata: Equatable {
 }
 
 /// Fully processed email ready for task creation
-public struct ProcessedEmail: Equatable {
-    public let originalCapture: EmailCapture
-    public let messages: [EmailMessage]
-    public let metadata: EmailMetadata
+public struct TFMProcessedEmail: Equatable {
+    public let originalCapture: TFMEmailCapture
+    public let messages: [TFMCapturedEmailMessage]
+    public let metadata: TFMEmailMetadata
     
     public init(
-        originalCapture: EmailCapture,
-        messages: [EmailMessage],
-        metadata: EmailMetadata
+        originalCapture: TFMEmailCapture,
+        messages: [TFMCapturedEmailMessage],
+        metadata: TFMEmailMetadata
     ) {
         self.originalCapture = originalCapture
         self.messages = messages
@@ -332,9 +332,23 @@ public struct ProcessedEmail: Equatable {
     }
 }
 
-// MARK: - EmailCapture Extension
+// MARK: - TFMEmailCapture Extension
 
-extension EmailCapture {
+extension TFMEmailCapture {
     /// Convenience property for accessing sender
-    public var capture: EmailCapture { self }
+    public var capture: TFMEmailCapture { self }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMEmailCaptureEngine")
+public typealias EmailCaptureEngine = TFMEmailCaptureEngine
+
+@available(*, deprecated, renamed: "TFMCapturedEmailMessage")
+public typealias EmailMessage = TFMCapturedEmailMessage
+
+@available(*, deprecated, renamed: "TFMEmailMetadata")
+public typealias EmailMetadata = TFMEmailMetadata
+
+@available(*, deprecated, renamed: "TFMProcessedEmail")
+public typealias ProcessedEmail = TFMProcessedEmail

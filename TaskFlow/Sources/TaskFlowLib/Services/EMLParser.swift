@@ -7,7 +7,7 @@ import Foundation
 
 /// Represents a parsed email address
 /// Per Requirements 2.2, 2.3
-public struct EmailAddress: Equatable, Codable {
+public struct TFMEmailAddress: Equatable, Codable {
     public let name: String?
     public let email: String
     
@@ -24,28 +24,41 @@ public struct EmailAddress: Equatable, Codable {
     }
 }
 
+/// A single message within an email thread
+public struct TFMEmailMessage: Equatable {
+    public let sender: String?
+    public let date: Date?
+    public let body: String
+    
+    public init(sender: String?, date: Date?, body: String) {
+        self.sender = sender
+        self.date = date
+        self.body = body
+    }
+}
+
 /// Represents a fully parsed email
 /// Per Requirements 2.1-2.8
-public struct ParsedEmail {
+public struct TFMParsedEmail {
     public let subject: String
-    public let sender: EmailAddress
-    public let recipients: [EmailAddress]
-    public let ccRecipients: [EmailAddress]
+    public let sender: TFMEmailAddress
+    public let recipients: [TFMEmailAddress]
+    public let ccRecipients: [TFMEmailAddress]
     public let date: Date
     public let body: String
     public let htmlBody: String?
-    public let messages: [EmailMessage]
+    public let messages: [TFMEmailMessage]
     public let headers: [String: String]
     
     public init(
         subject: String,
-        sender: EmailAddress,
-        recipients: [EmailAddress],
-        ccRecipients: [EmailAddress],
+        sender: TFMEmailAddress,
+        recipients: [TFMEmailAddress],
+        ccRecipients: [TFMEmailAddress],
         date: Date,
         body: String,
         htmlBody: String?,
-        messages: [EmailMessage],
+        messages: [TFMEmailMessage],
         headers: [String: String]
     ) {
         self.subject = subject
@@ -61,7 +74,7 @@ public struct ParsedEmail {
 }
 
 /// Errors that can occur during EML parsing
-public enum EMLParserError: Error, LocalizedError {
+public enum TFMEMLParserError: Error, LocalizedError {
     case fileNotFound
     case fileNotReadable
     case invalidFormat
@@ -86,16 +99,16 @@ public enum EMLParserError: Error, LocalizedError {
 
 /// Parses .eml files to extract email content
 /// Per Requirements 2.1-2.8, 3.1-3.4
-public class EMLParser {
+public class TFMEMLParser {
     
     public init() {}
     
     /// Parse an .eml file and extract all content
     /// Per Requirements 2.1-2.8
-    public func parse(fileURL: URL) throws -> ParsedEmail {
+    public func parse(fileURL: URL) throws -> TFMParsedEmail {
         // Check file exists
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            throw EMLParserError.fileNotFound
+            throw TFMEMLParserError.fileNotFound
         }
         
         // Read file content
@@ -108,7 +121,7 @@ public class EMLParser {
                let decoded = String(data: data, encoding: .isoLatin1) {
                 content = decoded
             } else {
-                throw EMLParserError.fileNotReadable
+                throw TFMEMLParserError.fileNotReadable
             }
         }
         
@@ -116,7 +129,7 @@ public class EMLParser {
     }
     
     /// Parse email content string
-    public func parseContent(_ content: String) throws -> ParsedEmail {
+    public func parseContent(_ content: String) throws -> TFMParsedEmail {
         // Split headers and body
         let (headersSection, bodySection) = splitHeadersAndBody(content)
         
@@ -125,7 +138,7 @@ public class EMLParser {
         
         // Extract required fields
         guard let fromHeader = headers["from"] ?? headers["From"] else {
-            throw EMLParserError.missingRequiredHeader("From")
+            throw TFMEMLParserError.missingRequiredHeader("From")
         }
         
         let subject = headers["subject"] ?? headers["Subject"] ?? "(No Subject)"
@@ -149,7 +162,7 @@ public class EMLParser {
         // Detect thread messages
         let messages = parseThread(body: plainBody)
         
-        return ParsedEmail(
+        return TFMParsedEmail(
             subject: subject,
             sender: sender,
             recipients: recipients,
@@ -217,7 +230,7 @@ public class EMLParser {
     }
     
     /// Parse a single email address from a header value
-    private func parseEmailAddress(_ value: String) -> EmailAddress {
+    private func parseEmailAddress(_ value: String) -> TFMEmailAddress {
         let trimmed = value.trimmingCharacters(in: .whitespaces)
         
         // Format: "Name" <email@example.com> or Name <email@example.com>
@@ -228,19 +241,19 @@ public class EMLParser {
             var name = String(trimmed[..<angleStart]).trimmingCharacters(in: .whitespaces)
             // Remove quotes from name
             name = name.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
-            return EmailAddress(name: name.isEmpty ? nil : name, email: email)
+            return TFMEmailAddress(name: name.isEmpty ? nil : name, email: email)
         }
         
         // Just an email address
-        return EmailAddress(name: nil, email: trimmed)
+        return TFMEmailAddress(name: nil, email: trimmed)
     }
     
     /// Parse multiple email addresses from a header value
-    private func parseEmailAddresses(_ value: String) -> [EmailAddress] {
+    private func parseEmailAddresses(_ value: String) -> [TFMEmailAddress] {
         guard !value.isEmpty else { return [] }
         
         // Split by comma, but be careful of commas inside quoted strings
-        var addresses: [EmailAddress] = []
+        var addresses: [TFMEmailAddress] = []
         var current = ""
         var inQuotes = false
         var inAngleBrackets = false
@@ -527,8 +540,8 @@ public class EMLParser {
     
     /// Parse email body to detect thread/quoted content
     /// Per Requirements 3.1, 3.2, 3.3, 3.4
-    public func parseThread(body: String) -> [EmailMessage] {
-        var messages: [EmailMessage] = []
+    public func parseThread(body: String) -> [TFMEmailMessage] {
+        var messages: [TFMEmailMessage] = []
         let lines = body.components(separatedBy: .newlines)
         
         var currentContent: [String] = []
@@ -542,7 +555,7 @@ public class EMLParser {
                 if !currentContent.isEmpty {
                     let content = currentContent.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
                     if !content.isEmpty {
-                        messages.append(EmailMessage(
+                        messages.append(TFMEmailMessage(
                             sender: currentSender,
                             date: currentDate,
                             body: content
@@ -563,7 +576,7 @@ public class EMLParser {
                 if !currentContent.isEmpty {
                     let content = currentContent.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
                     if !content.isEmpty {
-                        messages.append(EmailMessage(
+                        messages.append(TFMEmailMessage(
                             sender: currentSender,
                             date: currentDate,
                             body: content
@@ -595,7 +608,7 @@ public class EMLParser {
         if !currentContent.isEmpty {
             let content = currentContent.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
             if !content.isEmpty {
-                messages.append(EmailMessage(
+                messages.append(TFMEmailMessage(
                     sender: currentSender,
                     date: currentDate,
                     body: content
@@ -605,7 +618,7 @@ public class EMLParser {
         
         // If no thread structure detected, return single message
         if messages.isEmpty {
-            return [EmailMessage(sender: nil, date: nil, body: body)]
+            return [TFMEmailMessage(sender: nil, date: nil, body: body)]
         }
         
         return messages
@@ -665,3 +678,21 @@ public class EMLParser {
         return nil
     }
 }
+
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMEmailAddress")
+public typealias EmailAddress = TFMEmailAddress
+
+// Note: EmailMessage typealias is defined in EmailCaptureEngine.swift
+// TFMEmailMessage is the EMLParser version for parsed email threads
+
+@available(*, deprecated, renamed: "TFMParsedEmail")
+public typealias ParsedEmail = TFMParsedEmail
+
+@available(*, deprecated, renamed: "TFMEMLParserError")
+public typealias EMLParserError = TFMEMLParserError
+
+@available(*, deprecated, renamed: "TFMEMLParser")
+public typealias EMLParser = TFMEMLParser

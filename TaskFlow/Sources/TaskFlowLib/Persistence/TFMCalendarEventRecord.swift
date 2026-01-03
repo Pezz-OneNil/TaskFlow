@@ -1,9 +1,9 @@
 import Foundation
 import GRDB
 
-/// GRDB record for CalendarEvent persistence
+/// GRDB record for TFMCalendarEvent persistence
 /// Per Requirement 7.1
-public struct CalendarEventRecord: Codable, FetchableRecord, PersistableRecord {
+public struct TFMCalendarEventRecord: Codable, FetchableRecord, PersistableRecord {
     public static let databaseTableName = "calendar_events"
     
     public var id: String
@@ -24,8 +24,8 @@ public struct CalendarEventRecord: Codable, FetchableRecord, PersistableRecord {
         case updatedAt = "updated_at"
     }
     
-    /// Convert from domain CalendarEvent model
-    public init(from event: CalendarEvent) {
+    /// Convert from domain TFMCalendarEvent model
+    public init(from event: TFMCalendarEvent) {
         let formatter = ISO8601DateFormatter()
         self.id = event.id.uuidString
         self.categoryId = event.categoryId
@@ -36,8 +36,8 @@ public struct CalendarEventRecord: Codable, FetchableRecord, PersistableRecord {
         self.updatedAt = formatter.string(from: event.updatedAt)
     }
     
-    /// Convert to domain CalendarEvent model
-    public func toCalendarEvent() -> CalendarEvent? {
+    /// Convert to domain TFMCalendarEvent model
+    public func toCalendarEvent() -> TFMCalendarEvent? {
         let formatter = ISO8601DateFormatter()
         
         guard let uuid = UUID(uuidString: id),
@@ -48,7 +48,7 @@ public struct CalendarEventRecord: Codable, FetchableRecord, PersistableRecord {
             return nil
         }
         
-        return CalendarEvent(
+        return TFMCalendarEvent(
             id: uuid,
             categoryId: categoryId,
             startDate: start,
@@ -59,3 +59,8 @@ public struct CalendarEventRecord: Codable, FetchableRecord, PersistableRecord {
         )
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMCalendarEventRecord")
+public typealias CalendarEventRecord = TFMCalendarEventRecord

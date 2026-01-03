@@ -3,8 +3,8 @@ import SwiftUI
 
 /// Manages the menu bar status item for quick task creation
 /// Per Requirement 15 (Menu Bar Integration)
-public class MenuBarManager: NSObject, ObservableObject {
-    public static let shared = MenuBarManager()
+public class TFMMenuBarManager: NSObject, ObservableObject {
+    public static let shared = TFMMenuBarManager()
     
     private var statusItem: NSStatusItem?
     private var onCaptureRequested: (() -> Void)?
@@ -90,7 +90,7 @@ public class MenuBarManager: NSObject, ObservableObject {
     }
     
     @objc private func captureMenuItemClicked() {
-        print("MenuBarManager: Capture requested from menu bar")
+        print("TFMMenuBarManager: Capture requested from menu bar")
         onCaptureRequested?()
     }
     
@@ -128,7 +128,7 @@ public class MenuBarManager: NSObject, ObservableObject {
             window.ignoresMouseEvents = true
             
             // Create the loading view
-            let loadingView = LoadingOverlayView()
+            let loadingView = TFMLoadingOverlayView()
             window.contentView = NSHostingView(rootView: loadingView)
             
             window.orderFrontRegardless()
@@ -155,7 +155,7 @@ public class MenuBarManager: NSObject, ObservableObject {
 }
 
 /// SwiftUI view for the loading overlay
-struct LoadingOverlayView: View {
+struct TFMLoadingOverlayView: View {
     @State private var isAnimating = false
     
     var body: some View {
@@ -210,3 +210,11 @@ struct LoadingOverlayView: View {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMMenuBarManager")
+public typealias MenuBarManager = TFMMenuBarManager
+
+@available(*, deprecated, renamed: "TFMLoadingOverlayView")
+typealias LoadingOverlayView = TFMLoadingOverlayView

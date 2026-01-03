@@ -7,20 +7,20 @@ import XCTest
 /// **Validates: Requirements 3.1, 3.2**
 final class TaskFieldBoundsTests: XCTestCase {
     
-    private final class MockPersistenceManager: PersistenceManagerProtocol {
-        private var storedTasks: [UUID: Task] = [:]
+    private final class MockPersistenceManager: TFMPersistenceManagerProtocol {
+        private var storedTasks: [UUID: TFMTask] = [:]
         
-        func save(_ task: Task) throws {
+        func save(_ task: TFMTask) throws {
             storedTasks[task.id] = task
         }
         
-        func save(_ tasks: [Task]) throws {
+        func save(_ tasks: [TFMTask]) throws {
             for task in tasks {
                 storedTasks[task.id] = task
             }
         }
         
-        func loadAllTasks() throws -> [Task] {
+        func loadAllTasks() throws -> [TFMTask] {
             Array(storedTasks.values)
         }
         
@@ -30,36 +30,36 @@ final class TaskFieldBoundsTests: XCTestCase {
         
         func createBackup() throws {}
         
-        func restoreFromBackup() throws -> [Task] {
+        func restoreFromBackup() throws -> [TFMTask] {
             Array(storedTasks.values)
         }
     }
     
     // MARK: - Random Generators
     
-    private func randomTimeEstimate() -> TimeEstimate {
-        TimeEstimate.allCases.randomElement()!
+    private func randomTimeEstimate() -> TFMTimeEstimate {
+        TFMTimeEstimate.allCases.randomElement() ?? .twenty
     }
     
-    private func randomPriority() -> Priority {
-        Priority.allCases.randomElement()!
+    private func randomPriority() -> TFMPriority {
+        TFMPriority.allCases.randomElement() ?? .medium
     }
     
-    private func randomTaskStatus() -> TaskStatus {
-        TaskStatus.allCases.randomElement()!
+    private func randomTaskStatus() -> TFMTaskStatus {
+        TFMTaskStatus.allCases.randomElement() ?? .pending
     }
     
-    private func randomKanbanColumn() -> KanbanColumn? {
-        Bool.random() ? KanbanColumn.allCases.randomElement() : nil
+    private func randomKanbanColumn() -> TFMKanbanColumn? {
+        Bool.random() ? TFMKanbanColumn.allCases.randomElement() : nil
     }
     
     private func randomString(length: Int = 10) -> String {
         let letters = "abcdefghijklmnopqrstuvwxyz"
-        return String((0..<length).map { _ in letters.randomElement()! })
+        return String((0..<length).compactMap { _ in letters.randomElement() })
     }
     
-    private func randomTask() -> Task {
-        Task(
+    private func randomTask() -> TFMTask {
+        TFMTask(
             title: randomString(),
             description: randomString(length: 20),
             sourceContent: randomString(length: 50),
@@ -112,23 +112,23 @@ final class TaskFieldBoundsTests: XCTestCase {
     
     func testTimeEstimateHasAllExpectedCases() {
         let expected: Set<Int> = [10, 20, 40, 60, 90]
-        let actual = Set(TimeEstimate.allCases.map { $0.rawValue })
+        let actual = Set(TFMTimeEstimate.allCases.map { $0.rawValue })
         XCTAssertEqual(expected, actual)
     }
     
     func testPriorityHasAllExpectedCases() {
         let expected: Set<Int> = [1, 2, 3]
-        let actual = Set(Priority.allCases.map { $0.rawValue })
+        let actual = Set(TFMPriority.allCases.map { $0.rawValue })
         XCTAssertEqual(expected, actual)
     }
     
     func testPriorityOrderingIsCorrect() {
-        XCTAssertLessThan(Priority.low, Priority.medium)
-        XCTAssertLessThan(Priority.medium, Priority.mega)
+        XCTAssertLessThan(TFMPriority.low, TFMPriority.medium)
+        XCTAssertLessThan(TFMPriority.medium, TFMPriority.mega)
     }
 
     func testTaskManagerDefaultCreateTaskValues() {
-        let taskManager = TaskManager(persistenceManager: MockPersistenceManager())
+        let taskManager = TFMTaskManager(persistenceManager: MockPersistenceManager())
         let task = taskManager.createTask(title: "Default Task")
         
         XCTAssertEqual(task.timeEstimate, .twenty)

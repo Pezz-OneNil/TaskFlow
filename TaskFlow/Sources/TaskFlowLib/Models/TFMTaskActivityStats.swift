@@ -2,7 +2,7 @@ import Foundation
 
 /// Statistics for task activity on a specific date
 /// Per Requirements 6.1, 6.2
-public struct TaskActivityStats: Equatable {
+public struct TFMTaskActivityStats: Equatable {
     /// The date these stats are for (at day granularity)
     public let date: Date
     
@@ -23,3 +23,8 @@ public struct TaskActivityStats: Equatable {
         tasksAdded > 0 || tasksCompleted > 0
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMTaskActivityStats")
+public typealias TaskActivityStats = TFMTaskActivityStats

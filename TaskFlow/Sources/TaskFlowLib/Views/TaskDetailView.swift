@@ -8,17 +8,17 @@ public struct TaskDetailView: View {
     
     @ObservedObject var taskManager: TaskManager
     @StateObject private var assigneeManager = AssigneeManager.shared
-    let task: Task
+    let task: TFMTask
     let screenshotManager: ScreenshotManager
     let textExtractor: TextExtractor
-    let onSave: ((Task) -> Void)?
+    let onSave: ((TFMTask) -> Void)?
     
     @State private var title: String
     @State private var description: String
     @State private var furtherDetails: String
     @State private var assignedTo: String
-    @State private var selectedTimeEstimate: TimeEstimate
-    @State private var selectedPriority: Priority
+    @State private var selectedTimeEstimate: TFMTimeEstimate
+    @State private var selectedPriority: TFMPriority
     @State private var showingScreenshotViewer = false
     @State private var screenshot: NSImage?
     @State private var screenshotId: UUID?
@@ -26,11 +26,11 @@ public struct TaskDetailView: View {
     @State private var isReplacingScreenshot = false
     
     public init(
-        task: Task,
+        task: TFMTask,
         taskManager: TaskManager,
         screenshotManager: ScreenshotManager = ScreenshotManager(),
         textExtractor: TextExtractor = TextExtractor(),
-        onSave: ((Task) -> Void)? = nil
+        onSave: ((TFMTask) -> Void)? = nil
     ) {
         self.task = task
         self.taskManager = taskManager
@@ -477,7 +477,7 @@ public struct TaskDetailView: View {
                 .foregroundColor(CyberpunkTheme.textSecondary)
             
             HStack(spacing: CyberpunkTheme.spacingS) {
-                ForEach(TimeEstimate.allCases, id: \.self) { estimate in
+                ForEach(TFMTimeEstimate.allCases, id: \.self) { estimate in
                     TimeEstimateButton(
                         estimate: estimate,
                         isSelected: selectedTimeEstimate == estimate
@@ -496,7 +496,7 @@ public struct TaskDetailView: View {
                 .foregroundColor(CyberpunkTheme.textSecondary)
             
             HStack(spacing: CyberpunkTheme.spacingS) {
-                ForEach(Priority.allCases, id: \.self) { priority in
+                ForEach(TFMPriority.allCases, id: \.self) { priority in
                     PriorityButton(
                         priority: priority,
                         isSelected: selectedPriority == priority

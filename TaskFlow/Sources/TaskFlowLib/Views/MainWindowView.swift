@@ -75,7 +75,7 @@ public struct MainWindowView: View {
     
     @State private var selectedTab: NavigationTab = .tasks
     @State private var showingTaskCreation = false
-    @State private var pendingExtraction: TextExtraction?
+    @State private var pendingExtraction: TFMTextExtraction?
     
     // Search state
     @State private var searchQuery: String = ""
@@ -92,7 +92,7 @@ public struct MainWindowView: View {
     @State private var emailDropResultItem: EmailDropResultItem?
     
     // Edit task state
-    @State private var taskToEdit: Task?
+    @State private var taskToEdit: TFMTask?
     
     // Window reference for hiding during capture
     @State private var mainWindow: NSWindow?
@@ -119,7 +119,7 @@ public struct MainWindowView: View {
     }
     
     /// Filter tasks based on search query
-    private func filterTasks(_ tasks: [Task]) -> [Task] {
+    private func filterTasks(_ tasks: [TFMTask]) -> [TFMTask] {
         guard !searchQuery.isEmpty else { return tasks }
         let query = searchQuery.lowercased()
         return tasks.filter { task in

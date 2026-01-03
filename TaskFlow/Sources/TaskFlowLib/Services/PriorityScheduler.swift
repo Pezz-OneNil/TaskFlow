@@ -1,21 +1,21 @@
 import Foundation
 
 /// Protocol for task prioritization
-public protocol PrioritySchedulerProtocol {
-    func prioritizeTasks(_ tasks: [Task], remainingTime: TimeInterval) -> [Task]
-    func getNextTask(from tasks: [Task], remainingTime: TimeInterval) -> Task?
+public protocol TFMPrioritySchedulerProtocol {
+    func prioritizeTasks(_ tasks: [TFMTask], remainingTime: TimeInterval) -> [TFMTask]
+    func getNextTask(from tasks: [TFMTask], remainingTime: TimeInterval) -> TFMTask?
 }
 
 /// Schedules tasks by priority and time estimate
 /// Ordering: Priority descending (Mega > Medium > Low), then time ascending
-public final class PriorityScheduler: PrioritySchedulerProtocol {
+public final class TFMPriorityScheduler: TFMPrioritySchedulerProtocol {
     
     public init() {}
     
     /// Prioritize tasks based on priority (desc) then time estimate (asc)
     /// Filters out tasks that exceed remaining time
     /// Per Requirements 4.2, 4.3
-    public func prioritizeTasks(_ tasks: [Task], remainingTime: TimeInterval) -> [Task] {
+    public func prioritizeTasks(_ tasks: [TFMTask], remainingTime: TimeInterval) -> [TFMTask] {
         let remainingMinutes = Int(remainingTime / 60)
         
         return tasks
@@ -34,13 +34,13 @@ public final class PriorityScheduler: PrioritySchedulerProtocol {
     
     /// Get the next task that fits in remaining time
     /// Returns the highest priority task with shortest time estimate
-    public func getNextTask(from tasks: [Task], remainingTime: TimeInterval) -> Task? {
+    public func getNextTask(from tasks: [TFMTask], remainingTime: TimeInterval) -> TFMTask? {
         return prioritizeTasks(tasks, remainingTime: remainingTime).first
     }
     
     /// Get all tasks sorted by priority (without time filtering)
     /// Useful for displaying the full queue
-    public func sortByPriority(_ tasks: [Task]) -> [Task] {
+    public func sortByPriority(_ tasks: [TFMTask]) -> [TFMTask] {
         return tasks.sorted { task1, task2 in
             if task1.priority != task2.priority {
                 return task1.priority.rawValue > task2.priority.rawValue
@@ -50,16 +50,16 @@ public final class PriorityScheduler: PrioritySchedulerProtocol {
     }
     
     /// Calculate total time for a list of tasks
-    public func totalTime(for tasks: [Task]) -> TimeInterval {
+    public func totalTime(for tasks: [TFMTask]) -> TimeInterval {
         return tasks.reduce(0) { total, task in
             total + TimeInterval(task.timeEstimate.rawValue * 60)
         }
     }
     
     /// Get tasks that fit within a time budget
-    public func tasksThatFit(in timeInterval: TimeInterval, from tasks: [Task]) -> [Task] {
+    public func tasksThatFit(in timeInterval: TimeInterval, from tasks: [TFMTask]) -> [TFMTask] {
         let prioritized = sortByPriority(tasks)
-        var result: [Task] = []
+        var result: [TFMTask] = []
         var remainingTime = timeInterval
         
         for task in prioritized {
@@ -73,3 +73,11 @@ public final class PriorityScheduler: PrioritySchedulerProtocol {
         return result
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMPrioritySchedulerProtocol")
+public typealias PrioritySchedulerProtocol = TFMPrioritySchedulerProtocol
+
+@available(*, deprecated, renamed: "TFMPriorityScheduler")
+public typealias PriorityScheduler = TFMPriorityScheduler

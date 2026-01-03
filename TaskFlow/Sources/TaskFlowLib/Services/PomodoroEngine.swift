@@ -2,12 +2,12 @@ import Foundation
 import Combine
 
 /// Protocol for Pomodoro timer functionality
-public protocol PomodoroEngineProtocol: ObservableObject {
+public protocol TFMPomodoroEngineProtocol: ObservableObject {
     var remainingTime: TimeInterval { get }
     var isRunning: Bool { get }
     var isPaused: Bool { get }
-    var currentTask: Task? { get }
-    var upcomingTasks: [Task] { get }
+    var currentTask: TFMTask? { get }
+    var upcomingTasks: [TFMTask] { get }
     var sessionDuration: TimeInterval { get }
     
     func startSession(duration: TimeInterval)
@@ -21,21 +21,21 @@ public protocol PomodoroEngineProtocol: ObservableObject {
 /// Pomodoro timer engine that manages timed work sessions
 /// Integrates with PriorityScheduler for automatic task ordering
 /// Per Requirements 4.1, 4.4, 4.5, 4.6
-public final class PomodoroEngine: ObservableObject, PomodoroEngineProtocol {
+public final class TFMPomodoroEngine: ObservableObject, TFMPomodoroEngineProtocol {
     
     // MARK: - Published Properties
     
     @Published public private(set) var remainingTime: TimeInterval = 0
     @Published public private(set) var isRunning: Bool = false
     @Published public private(set) var isPaused: Bool = false
-    @Published public private(set) var currentTask: Task?
-    @Published public private(set) var upcomingTasks: [Task] = []
+    @Published public private(set) var currentTask: TFMTask?
+    @Published public private(set) var upcomingTasks: [TFMTask] = []
     @Published public private(set) var sessionDuration: TimeInterval = 0
     
     // MARK: - Dependencies
     
-    private let taskManager: TaskManager
-    private let scheduler: PriorityScheduler
+    private let taskManager: TFMTaskManager
+    private let scheduler: TFMPriorityScheduler
     
     // MARK: - Timer
     
@@ -53,14 +53,14 @@ public final class PomodoroEngine: ObservableObject, PomodoroEngineProtocol {
     public var onSessionExpired: (() -> Void)?
     
     /// Called when a task is completed
-    public var onTaskCompleted: ((Task) -> Void)?
+    public var onTaskCompleted: ((TFMTask) -> Void)?
     
     /// Called when advancing to next task
-    public var onTaskAdvanced: ((Task?) -> Void)?
+    public var onTaskAdvanced: ((TFMTask?) -> Void)?
     
     // MARK: - Initialization
     
-    public init(taskManager: TaskManager, scheduler: PriorityScheduler = PriorityScheduler()) {
+    public init(taskManager: TFMTaskManager, scheduler: TFMPriorityScheduler = TFMPriorityScheduler()) {
         self.taskManager = taskManager
         self.scheduler = scheduler
     }
@@ -172,7 +172,7 @@ public final class PomodoroEngine: ObservableObject, PomodoroEngineProtocol {
     private func refreshTaskQueue() {
         // Get tasks from Kanban backlog, in progress, and blocked columns
         // Per user requirement: Pomodoro pulls from Kanban columns, not active tasks
-        var kanbanTasks: [Task] = []
+        var kanbanTasks: [TFMTask] = []
         kanbanTasks.append(contentsOf: taskManager.getTasks(inColumn: .backlog))
         kanbanTasks.append(contentsOf: taskManager.getTasks(inColumn: .inProgress))
         kanbanTasks.append(contentsOf: taskManager.getTasks(inColumn: .blocked))
@@ -202,8 +202,8 @@ public final class PomodoroEngine: ObservableObject, PomodoroEngineProtocol {
     // MARK: - Utility
     
     /// Get tasks from Kanban columns for Pomodoro session
-    private func getKanbanTasksForPomodoro() -> [Task] {
-        var kanbanTasks: [Task] = []
+    private func getKanbanTasksForPomodoro() -> [TFMTask] {
+        var kanbanTasks: [TFMTask] = []
         kanbanTasks.append(contentsOf: taskManager.getTasks(inColumn: .backlog))
         kanbanTasks.append(contentsOf: taskManager.getTasks(inColumn: .inProgress))
         kanbanTasks.append(contentsOf: taskManager.getTasks(inColumn: .blocked))
@@ -224,3 +224,12 @@ public final class PomodoroEngine: ObservableObject, PomodoroEngineProtocol {
         return scheduler.totalTime(for: fitting)
     }
 }
+
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMPomodoroEngineProtocol")
+public typealias PomodoroEngineProtocol = TFMPomodoroEngineProtocol
+
+@available(*, deprecated, renamed: "TFMPomodoroEngine")
+public typealias PomodoroEngine = TFMPomodoroEngine

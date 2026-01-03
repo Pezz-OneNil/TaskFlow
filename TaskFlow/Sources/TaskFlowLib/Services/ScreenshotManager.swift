@@ -3,7 +3,7 @@ import AppKit
 import GRDB
 
 /// Stored screenshot with metadata
-public struct StoredScreenshot: Equatable {
+public struct TFMStoredScreenshot: Equatable {
     public let id: UUID
     public let image: NSImage
     public let capturedAt: Date
@@ -20,9 +20,9 @@ public struct StoredScreenshot: Equatable {
 }
 
 /// Protocol for screenshot management operations
-public protocol ScreenshotManagerProtocol {
+public protocol TFMScreenshotManagerProtocol {
     func saveScreenshot(_ image: NSImage) throws -> UUID
-    func loadScreenshot(id: UUID) -> StoredScreenshot?
+    func loadScreenshot(id: UUID) -> TFMStoredScreenshot?
     func deleteScreenshot(id: UUID) throws
     func getScreenshotPath(id: UUID) -> URL?
     func cropScreenshot(id: UUID, to rect: CGRect) throws -> UUID
@@ -30,12 +30,12 @@ public protocol ScreenshotManagerProtocol {
 
 /// Manages screenshot storage, retrieval, and cropping
 /// Per Requirements 2A.1, 2A.2, 2A.3, 2A.4
-public final class ScreenshotManager: ScreenshotManagerProtocol {
+public final class TFMScreenshotManager: TFMScreenshotManagerProtocol {
     
-    private let databaseManager: DatabaseManager
+    private let databaseManager: TFMDatabaseManager
     private let screenshotsDirectory: URL
     
-    public init(databaseManager: DatabaseManager = .shared) {
+    public init(databaseManager: TFMDatabaseManager = .shared) {
         self.databaseManager = databaseManager
         
         // Create screenshots directory in Application Support
@@ -47,7 +47,7 @@ public final class ScreenshotManager: ScreenshotManagerProtocol {
     }
     
     /// Initialize with custom directory (for testing)
-    public init(databaseManager: DatabaseManager, screenshotsDirectory: URL) {
+    public init(databaseManager: TFMDatabaseManager, screenshotsDirectory: URL) {
         self.databaseManager = databaseManager
         self.screenshotsDirectory = screenshotsDirectory
         try? FileManager.default.createDirectory(at: screenshotsDirectory, withIntermediateDirectories: true)
@@ -61,7 +61,7 @@ public final class ScreenshotManager: ScreenshotManagerProtocol {
         
         // Get image dimensions
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            throw ScreenshotError.invalidImage
+            throw TFMScreenshotError.invalidImage
         }
         let width = cgImage.width
         let height = cgImage.height
@@ -71,7 +71,7 @@ public final class ScreenshotManager: ScreenshotManagerProtocol {
         guard let tiffData = image.tiffRepresentation,
               let bitmap = NSBitmapImageRep(data: tiffData),
               let pngData = bitmap.representation(using: .png, properties: [:]) else {
-            throw ScreenshotError.encodingFailed
+            throw TFMScreenshotError.encodingFailed
         }
         
         try pngData.write(to: filePath)
@@ -94,7 +94,7 @@ public final class ScreenshotManager: ScreenshotManagerProtocol {
     }
     
     /// Load screenshot by ID
-    public func loadScreenshot(id: UUID) -> StoredScreenshot? {
+    public func loadScreenshot(id: UUID) -> TFMStoredScreenshot? {
         do {
             let pool = try databaseManager.getPool()
             
@@ -112,7 +112,7 @@ public final class ScreenshotManager: ScreenshotManagerProtocol {
             
             let capturedAt = ISO8601DateFormatter().date(from: record.capturedAt) ?? Date()
             
-            return StoredScreenshot(
+            return TFMStoredScreenshot(
                 id: id,
                 image: image,
                 capturedAt: capturedAt,
@@ -171,23 +171,23 @@ public final class ScreenshotManager: ScreenshotManagerProtocol {
     public func cropScreenshot(id: UUID, to rect: CGRect) throws -> UUID {
         // Load original screenshot
         guard let original = loadScreenshot(id: id) else {
-            throw ScreenshotError.notFound
+            throw TFMScreenshotError.notFound
         }
         
         // Get CGImage for cropping
         guard let cgImage = original.image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            throw ScreenshotError.invalidImage
+            throw TFMScreenshotError.invalidImage
         }
         
         // Validate crop rect
         let imageRect = CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height)
         guard imageRect.contains(rect) else {
-            throw ScreenshotError.invalidCropRect
+            throw TFMScreenshotError.invalidCropRect
         }
         
         // Perform crop
         guard let croppedCGImage = cgImage.cropping(to: rect) else {
-            throw ScreenshotError.cropFailed
+            throw TFMScreenshotError.cropFailed
         }
         
         // Create NSImage from cropped CGImage
@@ -199,7 +199,7 @@ public final class ScreenshotManager: ScreenshotManagerProtocol {
 }
 
 /// Screenshot-specific errors
-public enum ScreenshotError: Error, LocalizedError {
+public enum TFMScreenshotError: Error, LocalizedError {
     case invalidImage
     case encodingFailed
     case notFound
@@ -221,3 +221,18 @@ public enum ScreenshotError: Error, LocalizedError {
         }
     }
 }
+
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMStoredScreenshot")
+public typealias StoredScreenshot = TFMStoredScreenshot
+
+@available(*, deprecated, renamed: "TFMScreenshotManagerProtocol")
+public typealias ScreenshotManagerProtocol = TFMScreenshotManagerProtocol
+
+@available(*, deprecated, renamed: "TFMScreenshotManager")
+public typealias ScreenshotManager = TFMScreenshotManager
+
+@available(*, deprecated, renamed: "TFMScreenshotError")
+public typealias ScreenshotError = TFMScreenshotError

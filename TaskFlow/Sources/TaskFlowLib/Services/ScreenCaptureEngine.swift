@@ -3,7 +3,7 @@ import AppKit
 import ScreenCaptureKit
 
 /// Protocol for screen capture functionality
-public protocol ScreenCaptureEngineProtocol {
+public protocol TFMScreenCaptureEngineProtocol {
     func captureScreen() async throws -> NSImage
     func captureSelectedRegion(rect: CGRect) async throws -> NSImage
     func checkPermission() -> Bool
@@ -11,7 +11,7 @@ public protocol ScreenCaptureEngineProtocol {
 }
 
 /// Errors that can occur during screen capture
-public enum ScreenCaptureError: Error, LocalizedError {
+public enum TFMScreenCaptureError: Error, LocalizedError {
     case permissionDenied
     case captureFailure(String)
     case noDisplaysAvailable
@@ -34,7 +34,7 @@ public enum ScreenCaptureError: Error, LocalizedError {
 /// Engine for capturing screen content
 /// Uses CGWindowListCreateImage for macOS 13+ compatibility
 /// Per Requirements 2.1, 8.2, 8.3
-public final class ScreenCaptureEngine: ScreenCaptureEngineProtocol {
+public final class TFMScreenCaptureEngine: TFMScreenCaptureEngineProtocol {
     
     public init() {}
     
@@ -59,11 +59,11 @@ public final class ScreenCaptureEngine: ScreenCaptureEngineProtocol {
     /// Per Requirement 2.1
     public func captureScreen() async throws -> NSImage {
         guard checkPermission() else {
-            throw ScreenCaptureError.permissionDenied
+            throw TFMScreenCaptureError.permissionDenied
         }
         
         guard let mainDisplay = NSScreen.main else {
-            throw ScreenCaptureError.noDisplaysAvailable
+            throw TFMScreenCaptureError.noDisplaysAvailable
         }
         
         let displayBounds = mainDisplay.frame
@@ -75,7 +75,7 @@ public final class ScreenCaptureEngine: ScreenCaptureEngineProtocol {
             kCGNullWindowID,
             .bestResolution
         ) else {
-            throw ScreenCaptureError.captureFailure("Failed to create screen image")
+            throw TFMScreenCaptureError.captureFailure("Failed to create screen image")
         }
         
         let nsImage = NSImage(cgImage: cgImage, size: displayBounds.size)
@@ -85,23 +85,23 @@ public final class ScreenCaptureEngine: ScreenCaptureEngineProtocol {
     /// Capture a specific region of the screen
     /// Per Requirement 2.1
     public func captureSelectedRegion(rect: CGRect) async throws -> NSImage {
-        print("ScreenCaptureEngine: captureSelectedRegion called with rect \(rect)")
+        print("TFMScreenCaptureEngine: captureSelectedRegion called with rect \(rect)")
         
         let hasPermission = checkPermission()
-        print("ScreenCaptureEngine: Permission check result: \(hasPermission)")
+        print("TFMScreenCaptureEngine: Permission check result: \(hasPermission)")
         
         guard hasPermission else {
-            print("ScreenCaptureEngine: Permission denied, requesting...")
+            print("TFMScreenCaptureEngine: Permission denied, requesting...")
             _ = await requestPermission()
-            throw ScreenCaptureError.permissionDenied
+            throw TFMScreenCaptureError.permissionDenied
         }
         
         guard rect.width > 0 && rect.height > 0 else {
-            print("ScreenCaptureEngine: Invalid region - width: \(rect.width), height: \(rect.height)")
-            throw ScreenCaptureError.invalidRegion
+            print("TFMScreenCaptureEngine: Invalid region - width: \(rect.width), height: \(rect.height)")
+            throw TFMScreenCaptureError.invalidRegion
         }
         
-        print("ScreenCaptureEngine: Calling CGWindowListCreateImage...")
+        print("TFMScreenCaptureEngine: Calling CGWindowListCreateImage...")
         // Use CGWindowListCreateImage for macOS 13 compatibility
         guard let cgImage = CGWindowListCreateImage(
             rect,
@@ -109,13 +109,13 @@ public final class ScreenCaptureEngine: ScreenCaptureEngineProtocol {
             kCGNullWindowID,
             .bestResolution
         ) else {
-            print("ScreenCaptureEngine: CGWindowListCreateImage returned nil")
-            throw ScreenCaptureError.captureFailure("Failed to create region image")
+            print("TFMScreenCaptureEngine: CGWindowListCreateImage returned nil")
+            throw TFMScreenCaptureError.captureFailure("Failed to create region image")
         }
         
-        print("ScreenCaptureEngine: CGImage created successfully, size: \(cgImage.width)x\(cgImage.height)")
+        print("TFMScreenCaptureEngine: CGImage created successfully, size: \(cgImage.width)x\(cgImage.height)")
         let nsImage = NSImage(cgImage: cgImage, size: rect.size)
-        print("ScreenCaptureEngine: NSImage created, size: \(nsImage.size)")
+        print("TFMScreenCaptureEngine: NSImage created, size: \(nsImage.size)")
         return nsImage
     }
     
@@ -129,7 +129,7 @@ public final class ScreenCaptureEngine: ScreenCaptureEngineProtocol {
     /// Capture a specific window by window ID
     public func captureWindow(windowID: CGWindowID) async throws -> NSImage {
         guard checkPermission() else {
-            throw ScreenCaptureError.permissionDenied
+            throw TFMScreenCaptureError.permissionDenied
         }
         
         // Get window bounds
@@ -140,7 +140,7 @@ public final class ScreenCaptureEngine: ScreenCaptureEngineProtocol {
               let y = boundsDict["Y"],
               let width = boundsDict["Width"],
               let height = boundsDict["Height"] else {
-            throw ScreenCaptureError.captureFailure("Failed to get window bounds")
+            throw TFMScreenCaptureError.captureFailure("Failed to get window bounds")
         }
         
         let bounds = CGRect(x: x, y: y, width: width, height: height)
@@ -152,7 +152,7 @@ public final class ScreenCaptureEngine: ScreenCaptureEngineProtocol {
             windowID,
             .bestResolution
         ) else {
-            throw ScreenCaptureError.captureFailure("Failed to capture window")
+            throw TFMScreenCaptureError.captureFailure("Failed to capture window")
         }
         
         let nsImage = NSImage(cgImage: cgImage, size: bounds.size)
@@ -175,3 +175,15 @@ public final class ScreenCaptureEngine: ScreenCaptureEngineProtocol {
         }
     }
 }
+
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMScreenCaptureEngineProtocol")
+public typealias ScreenCaptureEngineProtocol = TFMScreenCaptureEngineProtocol
+
+@available(*, deprecated, renamed: "TFMScreenCaptureError")
+public typealias ScreenCaptureError = TFMScreenCaptureError
+
+@available(*, deprecated, renamed: "TFMScreenCaptureEngine")
+public typealias ScreenCaptureEngine = TFMScreenCaptureEngine

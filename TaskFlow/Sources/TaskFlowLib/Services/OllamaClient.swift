@@ -1,18 +1,18 @@
 import Foundation
 
 /// Response from Ollama generate endpoint
-struct OllamaGenerateResponse: Codable {
+struct TFMOllamaGenerateResponse: Codable {
     let model: String
     let response: String
     let done: Bool
 }
 
 /// Response from Ollama tags endpoint (list models)
-struct OllamaTagsResponse: Codable {
-    let models: [OllamaModel]
+struct TFMOllamaTagsResponse: Codable {
+    let models: [TFMOllamaModel]
 }
 
-struct OllamaModel: Codable {
+struct TFMOllamaModel: Codable {
     let name: String
     let size: Int64?
     let digest: String?
@@ -20,7 +20,7 @@ struct OllamaModel: Codable {
 
 /// HTTP client for Ollama REST API
 /// Per Requirement 2B.4
-public final class OllamaClient {
+public final class TFMOllamaClient {
     
     private let baseURL: URL
     private let session: URLSession
@@ -37,7 +37,7 @@ public final class OllamaClient {
                ["http", "https"].contains(scheme) {
                 self.baseURL = baseURL
             } else {
-                print("OllamaClient: Invalid base URL scheme, defaulting to localhost")
+                print("TFMOllamaClient: Invalid base URL scheme, defaulting to localhost")
                 self.baseURL = URL(string: "http://localhost:11434")!
             }
         } else if let host = baseURL.host,
@@ -46,7 +46,7 @@ public final class OllamaClient {
                   ["http", "https"].contains(scheme) {
             self.baseURL = baseURL
         } else {
-            print("OllamaClient: Invalid base URL, defaulting to localhost")
+            print("TFMOllamaClient: Invalid base URL, defaulting to localhost")
             self.baseURL = URL(string: "http://localhost:11434")!
         }
         self.timeout = timeout
@@ -86,7 +86,7 @@ public final class OllamaClient {
                 return []
             }
             
-            let tagsResponse = try JSONDecoder().decode(OllamaTagsResponse.self, from: data)
+            let tagsResponse = try JSONDecoder().decode(TFMOllamaTagsResponse.self, from: data)
             return tagsResponse.models.map { $0.name }
         } catch {
             return []
@@ -120,14 +120,14 @@ public final class OllamaClient {
         let (data, response) = try await session.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw OllamaError.invalidResponse
+            throw TFMOllamaError.invalidResponse
         }
         
         guard httpResponse.statusCode == 200 else {
-            throw OllamaError.requestFailed(statusCode: httpResponse.statusCode)
+            throw TFMOllamaError.requestFailed(statusCode: httpResponse.statusCode)
         }
         
-        let generateResponse = try JSONDecoder().decode(OllamaGenerateResponse.self, from: data)
+        let generateResponse = try JSONDecoder().decode(TFMOllamaGenerateResponse.self, from: data)
         return generateResponse.response
     }
     
@@ -147,7 +147,7 @@ public final class OllamaClient {
 }
 
 /// Ollama-specific errors
-public enum OllamaError: Error, LocalizedError {
+public enum TFMOllamaError: Error, LocalizedError {
     case connectionFailed
     case invalidResponse
     case requestFailed(statusCode: Int)
@@ -166,3 +166,11 @@ public enum OllamaError: Error, LocalizedError {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMOllamaClient")
+public typealias OllamaClient = TFMOllamaClient
+
+@available(*, deprecated, renamed: "TFMOllamaError")
+public typealias OllamaError = TFMOllamaError

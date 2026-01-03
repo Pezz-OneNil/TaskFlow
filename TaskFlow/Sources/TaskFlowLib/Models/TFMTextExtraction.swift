@@ -1,7 +1,7 @@
 import Foundation
 
 /// Result of text extraction from screen capture
-public struct TextExtraction: Equatable {
+public struct TFMTextExtraction: Equatable {
     public let rawText: String
     public let sender: String?
     public let recipient: String?
@@ -28,9 +28,9 @@ public struct TextExtraction: Equatable {
         self.keywords = keywords
     }
     
-    /// Creates TaskMetadata from this extraction
-    public func toMetadata() -> TaskMetadata {
-        TaskMetadata(
+    /// Creates TFMTaskMetadata from this extraction
+    public func toMetadata() -> TFMTaskMetadata {
+        TFMTaskMetadata(
             sender: sender,
             recipient: recipient,
             subject: subject,
@@ -45,3 +45,8 @@ public struct TextExtraction: Equatable {
         !rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMTextExtraction")
+public typealias TextExtraction = TFMTextExtraction

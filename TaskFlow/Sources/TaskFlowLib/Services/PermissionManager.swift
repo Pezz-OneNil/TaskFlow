@@ -3,7 +3,7 @@ import AppKit
 
 /// Manages system permissions required by the app
 /// Per Requirements 8.2, 8.3
-public final class PermissionManager: ObservableObject {
+public final class TFMPermissionManager: ObservableObject {
     
     @Published public private(set) var screenRecordingGranted: Bool = false
     @Published public private(set) var accessibilityGranted: Bool = false
@@ -119,3 +119,9 @@ public final class PermissionManager: ObservableObject {
         """
     }
 }
+
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMPermissionManager")
+public typealias PermissionManager = TFMPermissionManager

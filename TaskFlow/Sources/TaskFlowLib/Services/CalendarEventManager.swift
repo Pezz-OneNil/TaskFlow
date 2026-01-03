@@ -2,10 +2,10 @@ import Foundation
 
 /// Manages calendar events for the Annual Calendar
 /// Per Requirements 4.3, 4.8, 7.1, 7.3
-public final class CalendarEventManager: ObservableObject {
+public final class TFMCalendarEventManager: ObservableObject {
     
     /// Shared singleton instance
-    public static let shared = CalendarEventManager()
+    public static let shared = TFMCalendarEventManager()
     
     /// All calendar events
     @Published public private(set) var events: [CalendarEvent] = []
@@ -25,7 +25,7 @@ public final class CalendarEventManager: ObservableObject {
                 try CalendarEventRecord.fetchAll(db).compactMap { $0.toCalendarEvent() }
             }
         } catch {
-            print("CalendarEventManager: Failed to load events: \(error)")
+            print("TFMCalendarEventManager: Failed to load events: \(error)")
             events = []
         }
     }
@@ -72,7 +72,7 @@ public final class CalendarEventManager: ObservableObject {
             }
             loadEvents()
         } catch {
-            print("CalendarEventManager: Failed to delete event: \(error)")
+            print("TFMCalendarEventManager: Failed to delete event: \(error)")
         }
     }
     
@@ -124,7 +124,12 @@ public final class CalendarEventManager: ObservableObject {
             }
             loadEvents()
         } catch {
-            print("CalendarEventManager: Failed to save event: \(error)")
+            print("TFMCalendarEventManager: Failed to save event: \(error)")
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMCalendarEventManager")
+public typealias CalendarEventManager = TFMCalendarEventManager

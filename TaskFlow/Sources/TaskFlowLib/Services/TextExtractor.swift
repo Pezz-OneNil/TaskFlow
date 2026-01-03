@@ -3,13 +3,13 @@ import AppKit
 import Vision
 
 /// Protocol for text extraction from images
-public protocol TextExtractorProtocol {
-    func extractText(from image: NSImage) async throws -> TextExtraction
-    func extractText(from cgImage: CGImage) async throws -> TextExtraction
+public protocol TFMTextExtractorProtocol {
+    func extractText(from image: NSImage) async throws -> TFMTextExtraction
+    func extractText(from cgImage: CGImage) async throws -> TFMTextExtraction
 }
 
 /// Errors that can occur during text extraction
-public enum TextExtractionError: Error, LocalizedError {
+public enum TFMTextExtractionError: Error, LocalizedError {
     case imageConversionFailed
     case ocrFailed(String)
     case noTextFound
@@ -29,7 +29,7 @@ public enum TextExtractionError: Error, LocalizedError {
 /// Extracts text from images using Vision framework OCR
 /// Parses extracted text to identify sender, recipient, subject patterns
 /// Per Requirements 2.2, 2.3, 2.5
-public final class TextExtractor: TextExtractorProtocol {
+public final class TFMTextExtractor: TFMTextExtractorProtocol {
     
     public init() {}
     
@@ -37,20 +37,20 @@ public final class TextExtractor: TextExtractorProtocol {
     
     /// Extract text from NSImage
     /// Per Requirement 2.2
-    public func extractText(from image: NSImage) async throws -> TextExtraction {
+    public func extractText(from image: NSImage) async throws -> TFMTextExtraction {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            throw TextExtractionError.imageConversionFailed
+            throw TFMTextExtractionError.imageConversionFailed
         }
         return try await extractText(from: cgImage)
     }
     
     /// Extract text from CGImage using Vision framework
     /// Per Requirement 2.2
-    public func extractText(from cgImage: CGImage) async throws -> TextExtraction {
+    public func extractText(from cgImage: CGImage) async throws -> TFMTextExtraction {
         let rawText = try await performOCR(on: cgImage)
         
         if rawText.isEmpty {
-            throw TextExtractionError.noTextFound
+            throw TFMTextExtractionError.noTextFound
         }
         
         // Parse the extracted text
@@ -61,7 +61,7 @@ public final class TextExtractor: TextExtractorProtocol {
         let detectedApp = detectSourceApp(from: rawText)
         let keywords = extractKeywords(from: rawText)
         
-        return TextExtraction(
+        return TFMTextExtraction(
             rawText: rawText,
             sender: sender,
             recipient: recipient,
@@ -78,7 +78,7 @@ public final class TextExtractor: TextExtractorProtocol {
         return try await withCheckedThrowingContinuation { continuation in
             let request = VNRecognizeTextRequest { request, error in
                 if let error = error {
-                    continuation.resume(throwing: TextExtractionError.ocrFailed(error.localizedDescription))
+                    continuation.resume(throwing: TFMTextExtractionError.ocrFailed(error.localizedDescription))
                     return
                 }
                 
@@ -104,7 +104,7 @@ public final class TextExtractor: TextExtractorProtocol {
             do {
                 try handler.perform([request])
             } catch {
-                continuation.resume(throwing: TextExtractionError.ocrFailed(error.localizedDescription))
+                continuation.resume(throwing: TFMTextExtractionError.ocrFailed(error.localizedDescription))
             }
         }
     }
@@ -268,3 +268,15 @@ extension String {
         return String(self[captureRange])
     }
 }
+
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMTextExtractorProtocol")
+public typealias TextExtractorProtocol = TFMTextExtractorProtocol
+
+@available(*, deprecated, renamed: "TFMTextExtractionError")
+public typealias TextExtractionError = TFMTextExtractionError
+
+@available(*, deprecated, renamed: "TFMTextExtractor")
+public typealias TextExtractor = TFMTextExtractor

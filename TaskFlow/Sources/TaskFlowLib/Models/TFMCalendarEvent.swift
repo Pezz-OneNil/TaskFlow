@@ -2,7 +2,7 @@ import Foundation
 
 /// A calendar event spanning one or more days
 /// Per Requirements 4.3, 7.4
-public struct CalendarEvent: Identifiable, Codable, Equatable {
+public struct TFMCalendarEvent: Identifiable, Codable, Equatable {
     /// Unique identifier for the event
     public let id: UUID
     
@@ -72,3 +72,8 @@ public struct CalendarEvent: Identifiable, Codable, Equatable {
         return startDate <= yearEnd && endDate >= yearStart
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMCalendarEvent")
+public typealias CalendarEvent = TFMCalendarEvent

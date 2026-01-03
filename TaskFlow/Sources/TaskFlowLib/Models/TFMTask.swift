@@ -1,7 +1,7 @@
 import Foundation
 
 /// Core task model representing a single actionable item
-public struct Task: Identifiable, Codable, Equatable {
+public struct TFMTask: Identifiable, Codable, Equatable {
     public let id: UUID
     public var title: String
     public var description: String
@@ -9,13 +9,13 @@ public struct Task: Identifiable, Codable, Equatable {
     public var furtherDetails: String          // Editable OCR content
     public var screenshotId: UUID?             // Reference to stored screenshot
     public var assignedTo: String?             // Person/company assigned to this task
-    public var timeEstimate: TimeEstimate
-    public var priority: Priority
-    public var status: TaskStatus
-    public var kanbanColumn: KanbanColumn?
+    public var timeEstimate: TFMTimeEstimate
+    public var priority: TFMPriority
+    public var status: TFMTaskStatus
+    public var kanbanColumn: TFMKanbanColumn?
     public var createdAt: Date
     public var updatedAt: Date
-    public var metadata: TaskMetadata
+    public var metadata: TFMTaskMetadata
     
     public init(
         id: UUID = UUID(),
@@ -25,13 +25,13 @@ public struct Task: Identifiable, Codable, Equatable {
         furtherDetails: String = "",
         screenshotId: UUID? = nil,
         assignedTo: String? = nil,
-        timeEstimate: TimeEstimate = .twenty,
-        priority: Priority = .medium,
-        status: TaskStatus = .pending,
-        kanbanColumn: KanbanColumn? = nil,
+        timeEstimate: TFMTimeEstimate = .twenty,
+        priority: TFMPriority = .medium,
+        status: TFMTaskStatus = .pending,
+        kanbanColumn: TFMKanbanColumn? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
-        metadata: TaskMetadata = TaskMetadata()
+        metadata: TFMTaskMetadata = TFMTaskMetadata()
     ) {
         self.id = id
         self.title = title
@@ -51,7 +51,7 @@ public struct Task: Identifiable, Codable, Equatable {
 }
 
 /// Time estimate options for tasks (in minutes)
-public enum TimeEstimate: Int, Codable, CaseIterable, Equatable {
+public enum TFMTimeEstimate: Int, Codable, CaseIterable, Equatable {
     case ten = 10
     case twenty = 20
     case forty = 40
@@ -72,7 +72,7 @@ public enum TimeEstimate: Int, Codable, CaseIterable, Equatable {
 }
 
 /// Priority levels for tasks
-public enum Priority: Int, Codable, CaseIterable, Equatable, Comparable {
+public enum TFMPriority: Int, Codable, CaseIterable, Equatable, Comparable {
     case low = 1
     case medium = 2
     case mega = 3
@@ -85,13 +85,13 @@ public enum Priority: Int, Codable, CaseIterable, Equatable, Comparable {
         }
     }
     
-    public static func < (lhs: Priority, rhs: Priority) -> Bool {
+    public static func < (lhs: TFMPriority, rhs: TFMPriority) -> Bool {
         lhs.rawValue < rhs.rawValue
     }
 }
 
 /// Status of a task in its lifecycle
-public enum TaskStatus: String, Codable, CaseIterable, Equatable {
+public enum TFMTaskStatus: String, Codable, CaseIterable, Equatable {
     case pending
     case inProgress
     case completed
@@ -110,7 +110,7 @@ public enum TaskStatus: String, Codable, CaseIterable, Equatable {
 }
 
 /// Kanban board columns for organizing tasks across lifecycle
-public enum KanbanColumn: String, Codable, CaseIterable, Equatable {
+public enum TFMKanbanColumn: String, Codable, CaseIterable, Equatable {
     case backlog
     case inProgress
     case blocked
@@ -129,7 +129,7 @@ public enum KanbanColumn: String, Codable, CaseIterable, Equatable {
 }
 
 /// Metadata extracted from captured screen content
-public struct TaskMetadata: Codable, Equatable {
+public struct TFMTaskMetadata: Codable, Equatable {
     public var sender: String?
     public var recipient: String?
     public var subject: String?
@@ -161,3 +161,23 @@ public struct TaskMetadata: Codable, Equatable {
         sender != nil || recipient != nil || subject != nil || !keywords.isEmpty
     }
 }
+
+// MARK: - Backward Compatibility Type Aliases
+
+@available(*, deprecated, renamed: "TFMTask")
+public typealias Task = TFMTask
+
+@available(*, deprecated, renamed: "TFMTimeEstimate")
+public typealias TimeEstimate = TFMTimeEstimate
+
+@available(*, deprecated, renamed: "TFMPriority")
+public typealias Priority = TFMPriority
+
+@available(*, deprecated, renamed: "TFMTaskStatus")
+public typealias TaskStatus = TFMTaskStatus
+
+@available(*, deprecated, renamed: "TFMKanbanColumn")
+public typealias KanbanColumn = TFMKanbanColumn
+
+@available(*, deprecated, renamed: "TFMTaskMetadata")
+public typealias TaskMetadata = TFMTaskMetadata

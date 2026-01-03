@@ -11,21 +11,21 @@ import Foundation
 import GRDB
 
 /// Type of backup for retention policy management
-public enum BackupType: String, Codable {
+public enum TFMBackupType: String, Codable {
     case manual      // User-initiated backups (keep max 5)
     case daily       // Automatic daily backups (keep 14 days)
     case preMigration // Created before schema migrations (keep all)
 }
 
 /// Information about a backup file
-public struct BackupInfo: Identifiable {
+public struct TFMBackupInfo: Identifiable {
     public let id: UUID
     public let url: URL
     public let createdAt: Date
     public let fileSize: Int64
     public let taskCount: Int?
     public let screenshotCount: Int
-    public let backupType: BackupType
+    public let backupType: TFMBackupType
     public let isZipArchive: Bool
     
     public var formattedDate: String {
@@ -51,12 +51,12 @@ public struct BackupInfo: Identifiable {
 }
 
 /// Manages backup creation, restoration, and periodic scheduling
-public final class BackupManager: ObservableObject {
+public final class TFMBackupManager: ObservableObject {
     
     /// Shared instance
-    public static let shared = BackupManager()
+    public static let shared = TFMBackupManager()
     
-    private let databaseManager: DatabaseManager
+    private let databaseManager: TFMDatabaseManager
     private var dailyBackupTimer: Timer?
     
     /// Retention policy constants
@@ -70,7 +70,7 @@ public final class BackupManager: ObservableObject {
     @Published public var isCreatingBackup = false
     @Published public var isRestoring = false
     @Published public var lastBackupDate: Date?
-    @Published public var availableBackups: [BackupInfo] = []
+    @Published public var availableBackups: [TFMBackupInfo] = []
     
     /// Backup directory path
     public var backupDirectory: URL {
@@ -84,7 +84,7 @@ public final class BackupManager: ObservableObject {
         return appSupport.appendingPathComponent("TaskFlow/Screenshots", isDirectory: true)
     }
     
-    public init(databaseManager: DatabaseManager = .shared) {
+    public init(databaseManager: TFMDatabaseManager = .shared) {
         self.databaseManager = databaseManager
         refreshBackupList()
     }
@@ -100,7 +100,7 @@ public final class BackupManager: ObservableObject {
                 options: .skipsHiddenFiles
             ).filter { $0.pathExtension == "json" || $0.pathExtension == "zip" }
             
-            availableBackups = backupFiles.compactMap { url -> BackupInfo? in
+            availableBackups = backupFiles.compactMap { url -> TFMBackupInfo? in
                 guard let resourceValues = try? url.resourceValues(forKeys: [.creationDateKey, .fileSizeKey]),
                       let createdAt = resourceValues.creationDate,
                       let fileSize = resourceValues.fileSize else {
@@ -111,7 +111,7 @@ public final class BackupManager: ObservableObject {
                 let filename = url.lastPathComponent
                 
                 // Determine backup type from filename
-                let backupType: BackupType
+                let backupType: TFMBackupType
                 if filename.contains("_daily_") {
                     backupType = .daily
                 } else if filename.contains("_premigration_") {
@@ -139,7 +139,7 @@ public final class BackupManager: ObservableObject {
                     }
                 }
                 
-                return BackupInfo(
+                return TFMBackupInfo(
                     id: UUID(),
                     url: url,
                     createdAt: createdAt,
@@ -232,7 +232,7 @@ public final class BackupManager: ObservableObject {
     }
     
     /// Create a zip backup including screenshots
-    private func createZipBackup(type: BackupType) throws -> URL {
+    private func createZipBackup(type: TFMBackupType) throws -> URL {
         isCreatingBackup = true
         defer {
             isCreatingBackup = false
@@ -340,7 +340,7 @@ public final class BackupManager: ObservableObject {
     // MARK: - Backup Restoration
     
     /// Restore from the most recent valid backup
-    public func restoreFromBackup() throws -> [Task] {
+    public func restoreFromBackup() throws -> [TFMTask] {
         isRestoring = true
         defer { isRestoring = false }
         
@@ -353,7 +353,7 @@ public final class BackupManager: ObservableObject {
     }
     
     /// Restore from a specific backup
-    public func restoreFromBackup(_ backup: BackupInfo) throws -> [Task] {
+    public func restoreFromBackup(_ backup: TFMBackupInfo) throws -> [TFMTask] {
         isRestoring = true
         defer {
             isRestoring = false
@@ -368,7 +368,7 @@ public final class BackupManager: ObservableObject {
     }
     
     /// Restore from a zip backup (includes screenshots)
-    private func restoreFromZipBackup(_ zipUrl: URL) throws -> [Task] {
+    private func restoreFromZipBackup(_ zipUrl: URL) throws -> [TFMTask] {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: tempDir) }
         
@@ -430,7 +430,7 @@ public final class BackupManager: ObservableObject {
     }
     
     /// Restore from a JSON file (legacy format, no screenshots)
-    private func restoreFromJsonFile(_ url: URL) throws -> [Task] {
+    private func restoreFromJsonFile(_ url: URL) throws -> [TFMTask] {
         let data = try Data(contentsOf: url)
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -502,13 +502,13 @@ public final class BackupManager: ObservableObject {
     // MARK: - Export/Import
     
     /// Export a backup to a user-selected location
-    public func exportBackup(_ backup: BackupInfo, to destination: URL) throws {
+    public func exportBackup(_ backup: TFMBackupInfo, to destination: URL) throws {
         try FileManager.default.copyItem(at: backup.url, to: destination)
         print("✅ Backup exported to: \(destination.path)")
     }
     
     /// Import a backup from a user-selected file
-    public func importBackup(from source: URL) throws -> BackupInfo {
+    public func importBackup(from source: URL) throws -> TFMBackupInfo {
         let isZip = source.pathExtension == "zip"
         
         // Validate the backup
@@ -544,7 +544,7 @@ public final class BackupManager: ObservableObject {
     }
     
     /// Delete a specific backup
-    public func deleteBackup(_ backup: BackupInfo) throws {
+    public func deleteBackup(_ backup: TFMBackupInfo) throws {
         try FileManager.default.removeItem(at: backup.url)
         refreshBackupList()
     }
@@ -748,3 +748,15 @@ struct BackupData: Codable {
         self.categoryNames = categoryNames
     }
 }
+
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMBackupType")
+public typealias BackupType = TFMBackupType
+
+@available(*, deprecated, renamed: "TFMBackupInfo")
+public typealias BackupInfo = TFMBackupInfo
+
+@available(*, deprecated, renamed: "TFMBackupManager")
+public typealias BackupManager = TFMBackupManager

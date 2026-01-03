@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Preset color options for calendar event categories
 /// Per Requirements 3.1, 3.6 - 10 cyberpunk-style colors
-public enum CategoryColor: Int, Codable, CaseIterable, Equatable {
+public enum TFMCategoryColor: Int, Codable, CaseIterable, Equatable {
     case neonPink = 1
     case electricBlue = 2
     case acidGreen = 3
@@ -60,26 +60,34 @@ public enum CategoryColor: Int, Codable, CaseIterable, Equatable {
 
 /// A named category for calendar events with a preset color
 /// Per Requirements 3.1, 3.2, 3.3
-public struct EventCategory: Identifiable, Codable, Equatable {
-    /// Category ID (1-10, corresponds to CategoryColor rawValue)
+public struct TFMEventCategory: Identifiable, Codable, Equatable {
+    /// Category ID (1-10, corresponds to TFMCategoryColor rawValue)
     public let id: Int
     
     /// User-editable name for the category
     public var name: String
     
     /// The preset color for this category
-    public let color: CategoryColor
+    public let color: TFMCategoryColor
     
-    public init(id: Int, name: String, color: CategoryColor) {
+    public init(id: Int, name: String, color: TFMCategoryColor) {
         self.id = id
         self.name = name
         self.color = color
     }
     
     /// Create a category with default name from color
-    public init(color: CategoryColor) {
+    public init(color: TFMCategoryColor) {
         self.id = color.rawValue
         self.name = "Category \(color.rawValue)"
         self.color = color
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMCategoryColor")
+public typealias CategoryColor = TFMCategoryColor
+
+@available(*, deprecated, renamed: "TFMEventCategory")
+public typealias EventCategory = TFMEventCategory

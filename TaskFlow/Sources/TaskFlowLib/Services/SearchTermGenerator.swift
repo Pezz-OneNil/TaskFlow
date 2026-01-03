@@ -2,15 +2,15 @@ import Foundation
 import AppKit
 
 /// Protocol for search term generation
-public protocol SearchTermGeneratorProtocol {
-    func generateSearchTerms(for task: Task) -> [String]
+public protocol TFMSearchTermGeneratorProtocol {
+    func generateSearchTerms(for task: TFMTask) -> [String]
     func copyToClipboard(_ terms: [String]) -> Bool
 }
 
 /// Generates search terms from task metadata for quick lookup
 /// Prioritizes rare keywords, sender/recipient, subject lines
 /// Per Requirements 6.1, 6.2, 6.3, 6.4, 6.5
-public final class SearchTermGenerator: SearchTermGeneratorProtocol {
+public final class TFMSearchTermGenerator: TFMSearchTermGeneratorProtocol {
     
     public init() {}
     
@@ -18,7 +18,7 @@ public final class SearchTermGenerator: SearchTermGeneratorProtocol {
     
     /// Generate search terms for a task
     /// Per Requirements 6.1, 6.2, 6.4
-    public func generateSearchTerms(for task: Task) -> [String] {
+    public func generateSearchTerms(for task: TFMTask) -> [String] {
         var terms: [String] = []
         
         // Priority 1: Subject line (most specific)
@@ -137,7 +137,7 @@ public final class SearchTermGenerator: SearchTermGeneratorProtocol {
     }
     
     /// Extract rare keywords from task metadata
-    private func extractRareKeywords(from task: Task) -> [String] {
+    private func extractRareKeywords(from task: TFMTask) -> [String] {
         // Use keywords from metadata if available
         let keywords = task.metadata.keywords
         
@@ -187,14 +187,22 @@ public final class SearchTermGenerator: SearchTermGeneratorProtocol {
     // MARK: - Convenience Methods
     
     /// Generate and copy search terms in one step
-    public func generateAndCopy(for task: Task) -> Bool {
+    public func generateAndCopy(for task: TFMTask) -> Bool {
         let terms = generateSearchTerms(for: task)
         return copyToClipboard(terms)
     }
     
     /// Get formatted search string for display
-    public func getFormattedSearchString(for task: Task) -> String {
+    public func getFormattedSearchString(for task: TFMTask) -> String {
         let terms = generateSearchTerms(for: task)
         return terms.joined(separator: " OR ")
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMSearchTermGeneratorProtocol")
+public typealias SearchTermGeneratorProtocol = TFMSearchTermGeneratorProtocol
+
+@available(*, deprecated, renamed: "TFMSearchTermGenerator")
+public typealias SearchTermGenerator = TFMSearchTermGenerator

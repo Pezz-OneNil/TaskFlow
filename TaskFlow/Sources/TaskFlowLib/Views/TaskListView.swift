@@ -5,22 +5,22 @@ import SwiftUI
 public struct TaskListView: View {
     @ObservedObject var taskManager: TaskManager
     let searchQuery: String
-    let filterTasks: ([Task]) -> [Task]
-    let onComplete: (Task) -> Void
-    let onDelete: (Task) -> Void
-    let onMoveToKanban: (Task) -> Void
-    let onCopySearchTerms: (Task) -> Void
-    let onEdit: (Task) -> Void
+    let filterTasks: ([TFMTask]) -> [TFMTask]
+    let onComplete: (TFMTask) -> Void
+    let onDelete: (TFMTask) -> Void
+    let onMoveToKanban: (TFMTask) -> Void
+    let onCopySearchTerms: (TFMTask) -> Void
+    let onEdit: (TFMTask) -> Void
     
     public init(
         taskManager: TaskManager,
         searchQuery: String = "",
-        filterTasks: @escaping ([Task]) -> [Task] = { $0 },
-        onComplete: @escaping (Task) -> Void = { _ in },
-        onDelete: @escaping (Task) -> Void = { _ in },
-        onMoveToKanban: @escaping (Task) -> Void = { _ in },
-        onCopySearchTerms: @escaping (Task) -> Void = { _ in },
-        onEdit: @escaping (Task) -> Void = { _ in }
+        filterTasks: @escaping ([TFMTask]) -> [TFMTask] = { $0 },
+        onComplete: @escaping (TFMTask) -> Void = { _ in },
+        onDelete: @escaping (TFMTask) -> Void = { _ in },
+        onMoveToKanban: @escaping (TFMTask) -> Void = { _ in },
+        onCopySearchTerms: @escaping (TFMTask) -> Void = { _ in },
+        onEdit: @escaping (TFMTask) -> Void = { _ in }
     ) {
         self.taskManager = taskManager
         self.searchQuery = searchQuery
@@ -71,7 +71,7 @@ public struct TaskListView: View {
         .background(CyberpunkTheme.backgroundPrimary)
     }
     
-    private var sortedTasks: [Task] {
+    private var sortedTasks: [TFMTask] {
         let scheduler = PriorityScheduler()
         let activeTasks = taskManager.getActiveTasks()
         let filtered = filterTasks(activeTasks)
@@ -81,7 +81,7 @@ public struct TaskListView: View {
 
 /// Individual task row in the list
 public struct TaskRowView: View {
-    let task: Task
+    let task: TFMTask
     let onComplete: () -> Void
     let onDelete: () -> Void
     let onMoveToKanban: () -> Void
@@ -91,7 +91,7 @@ public struct TaskRowView: View {
     @State private var isHovered = false
     
     public init(
-        task: Task,
+        task: TFMTask,
         onComplete: @escaping () -> Void,
         onDelete: @escaping () -> Void = {},
         onMoveToKanban: @escaping () -> Void,

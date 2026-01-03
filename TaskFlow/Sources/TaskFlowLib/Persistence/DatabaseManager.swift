@@ -14,10 +14,10 @@ import GRDB
 public let CURRENT_SCHEMA_VERSION = 3
 
 /// Manages SQLite database connection and schema
-public final class DatabaseManager {
+public final class TFMDatabaseManager {
     
     /// Shared instance for app-wide database access
-    public static let shared = DatabaseManager()
+    public static let shared = TFMDatabaseManager()
     
     /// The database connection pool
     private var dbPool: DatabasePool?
@@ -392,3 +392,8 @@ public enum DatabaseError: Error, LocalizedError {
         }
     }
 }
+
+// MARK: - Backward Compatibility Type Alias
+
+@available(*, deprecated, renamed: "TFMDatabaseManager")
+public typealias DatabaseManager = TFMDatabaseManager

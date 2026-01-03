@@ -2,21 +2,30 @@ import Foundation
 
 /// Manages app settings persistence
 /// Per Requirements 2B - LLM model selection
-public final class SettingsManager: ObservableObject {
+public final class TFMSettingsManager: ObservableObject {
     
-    public static let shared = SettingsManager()
+    public static let shared = TFMSettingsManager()
     
     private let defaults = UserDefaults.standard
     
-    // Keys
+    // Keys - prefixed with TFM_ for namespace isolation
     private enum Keys {
-        static let selectedModel = "selectedOllamaModel"
-        static let availableModels = "availableOllamaModels"
-        static let savedAssignees = "savedAssigneeNames"
-        static let outlookIntegrationEnabled = "outlookIntegrationEnabled"
-        static let emailDropEnabled = "emailDropEnabled"
-        static let emailAutoCreateTasks = "emailAutoCreateTasks"
-        static let showAnnualCalendar = "showAnnualCalendar"
+        static let selectedModel = "TFM_selectedOllamaModel"
+        static let availableModels = "TFM_availableOllamaModels"
+        static let savedAssignees = "TFM_savedAssigneeNames"
+        static let outlookIntegrationEnabled = "TFM_outlookIntegrationEnabled"
+        static let emailDropEnabled = "TFM_emailDropEnabled"
+        static let emailAutoCreateTasks = "TFM_emailAutoCreateTasks"
+        static let showAnnualCalendar = "TFM_showAnnualCalendar"
+        
+        // Legacy keys for migration
+        static let legacySelectedModel = "selectedOllamaModel"
+        static let legacyAvailableModels = "availableOllamaModels"
+        static let legacySavedAssignees = "savedAssigneeNames"
+        static let legacyOutlookIntegrationEnabled = "outlookIntegrationEnabled"
+        static let legacyEmailDropEnabled = "emailDropEnabled"
+        static let legacyEmailAutoCreateTasks = "emailAutoCreateTasks"
+        static let legacyShowAnnualCalendar = "showAnnualCalendar"
     }
     
     /// Currently selected Ollama model
@@ -24,7 +33,7 @@ public final class SettingsManager: ObservableObject {
         didSet {
             if let model = selectedModel {
                 defaults.set(model, forKey: Keys.selectedModel)
-                print("SettingsManager: Saved selected model: \(model)")
+                print("TFMSettingsManager: Saved selected model: \(model)")
             } else {
                 defaults.removeObject(forKey: Keys.selectedModel)
             }
@@ -39,7 +48,7 @@ public final class SettingsManager: ObservableObject {
     @Published public var outlookIntegrationEnabled: Bool {
         didSet {
             defaults.set(outlookIntegrationEnabled, forKey: Keys.outlookIntegrationEnabled)
-            print("SettingsManager: Outlook integration \(outlookIntegrationEnabled ? "enabled" : "disabled")")
+            print("TFMSettingsManager: Outlook integration \(outlookIntegrationEnabled ? "enabled" : "disabled")")
         }
     }
     
@@ -49,7 +58,7 @@ public final class SettingsManager: ObservableObject {
     @Published public var emailDropEnabled: Bool {
         didSet {
             defaults.set(emailDropEnabled, forKey: Keys.emailDropEnabled)
-            print("SettingsManager: Email drop \(emailDropEnabled ? "enabled" : "disabled")")
+            print("TFMSettingsManager: Email drop \(emailDropEnabled ? "enabled" : "disabled")")
         }
     }
     
@@ -59,7 +68,7 @@ public final class SettingsManager: ObservableObject {
     @Published public var emailAutoCreateTasks: Bool {
         didSet {
             defaults.set(emailAutoCreateTasks, forKey: Keys.emailAutoCreateTasks)
-            print("SettingsManager: Email auto-create tasks \(emailAutoCreateTasks ? "enabled" : "disabled")")
+            print("TFMSettingsManager: Email auto-create tasks \(emailAutoCreateTasks ? "enabled" : "disabled")")
         }
     }
     
@@ -69,12 +78,21 @@ public final class SettingsManager: ObservableObject {
     @Published public var showAnnualCalendar: Bool {
         didSet {
             defaults.set(showAnnualCalendar, forKey: Keys.showAnnualCalendar)
-            print("SettingsManager: Annual Calendar \(showAnnualCalendar ? "enabled" : "disabled")")
+            print("TFMSettingsManager: Annual Calendar \(showAnnualCalendar ? "enabled" : "disabled")")
         }
     }
     
     private init() {
-        // Load Outlook integration setting (legacy)
+        // Initialize all stored properties first with defaults
+        outlookIntegrationEnabled = false
+        emailDropEnabled = true
+        emailAutoCreateTasks = false
+        showAnnualCalendar = false
+        
+        // Migrate legacy keys if needed (now safe to call)
+        migrateFromLegacyKeys()
+        
+        // Load Outlook integration setting
         outlookIntegrationEnabled = defaults.bool(forKey: Keys.outlookIntegrationEnabled)
         
         // Load email drop settings (default: enabled)
@@ -93,10 +111,44 @@ public final class SettingsManager: ObservableObject {
         
         // Load saved model
         selectedModel = defaults.string(forKey: Keys.selectedModel)
-        print("SettingsManager: Loaded selected model: \(selectedModel ?? "none")")
-        print("SettingsManager: Email drop enabled: \(emailDropEnabled)")
-        print("SettingsManager: Email auto-create: \(emailAutoCreateTasks)")
-        print("SettingsManager: Annual Calendar: \(showAnnualCalendar)")
+        print("TFMSettingsManager: Loaded selected model: \(selectedModel ?? "none")")
+        print("TFMSettingsManager: Email drop enabled: \(emailDropEnabled)")
+        print("TFMSettingsManager: Email auto-create: \(emailAutoCreateTasks)")
+        print("TFMSettingsManager: Annual Calendar: \(showAnnualCalendar)")
+    }
+    
+    /// Migrate settings from legacy (unprefixed) keys to TFM_ prefixed keys
+    private func migrateFromLegacyKeys() {
+        // Only migrate if new keys don't exist yet
+        if defaults.object(forKey: Keys.selectedModel) == nil,
+           let legacyValue = defaults.string(forKey: Keys.legacySelectedModel) {
+            defaults.set(legacyValue, forKey: Keys.selectedModel)
+            print("TFMSettingsManager: Migrated selectedModel from legacy key")
+        }
+        
+        if defaults.object(forKey: Keys.outlookIntegrationEnabled) == nil,
+           defaults.object(forKey: Keys.legacyOutlookIntegrationEnabled) != nil {
+            defaults.set(defaults.bool(forKey: Keys.legacyOutlookIntegrationEnabled), forKey: Keys.outlookIntegrationEnabled)
+            print("TFMSettingsManager: Migrated outlookIntegrationEnabled from legacy key")
+        }
+        
+        if defaults.object(forKey: Keys.emailDropEnabled) == nil,
+           defaults.object(forKey: Keys.legacyEmailDropEnabled) != nil {
+            defaults.set(defaults.bool(forKey: Keys.legacyEmailDropEnabled), forKey: Keys.emailDropEnabled)
+            print("TFMSettingsManager: Migrated emailDropEnabled from legacy key")
+        }
+        
+        if defaults.object(forKey: Keys.emailAutoCreateTasks) == nil,
+           defaults.object(forKey: Keys.legacyEmailAutoCreateTasks) != nil {
+            defaults.set(defaults.bool(forKey: Keys.legacyEmailAutoCreateTasks), forKey: Keys.emailAutoCreateTasks)
+            print("TFMSettingsManager: Migrated emailAutoCreateTasks from legacy key")
+        }
+        
+        if defaults.object(forKey: Keys.showAnnualCalendar) == nil,
+           defaults.object(forKey: Keys.legacyShowAnnualCalendar) != nil {
+            defaults.set(defaults.bool(forKey: Keys.legacyShowAnnualCalendar), forKey: Keys.showAnnualCalendar)
+            print("TFMSettingsManager: Migrated showAnnualCalendar from legacy key")
+        }
     }
     
     /// Update available models list
@@ -106,7 +158,7 @@ public final class SettingsManager: ObservableObject {
             
             // If selected model is no longer available, clear it
             if let selected = self.selectedModel, !models.contains(selected) {
-                print("SettingsManager: Selected model \(selected) no longer available")
+                print("TFMSettingsManager: Selected model \(selected) no longer available")
                 self.selectedModel = nil
             }
         }
@@ -117,3 +169,8 @@ public final class SettingsManager: ObservableObject {
         return selectedModel ?? defaultModel
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMSettingsManager")
+public typealias SettingsManager = TFMSettingsManager

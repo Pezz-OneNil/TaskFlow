@@ -8,7 +8,7 @@
 
 *Capture • Organize • Conquer*
 
-[![Version](https://img.shields.io/badge/version-1.2.0-00F5FF?style=flat-square&labelColor=1a1a2e)](../../releases)
+[![Version](https://img.shields.io/badge/version-1.3.0-00F5FF?style=flat-square&labelColor=1a1a2e)](../../releases)
 [![Platform](https://img.shields.io/badge/macOS-13+-FF006E?style=flat-square&labelColor=1a1a2e)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-5.9-FFE66D?style=flat-square&labelColor=1a1a2e)](https://swift.org)
 [![License](https://img.shields.io/badge/license-Proprietary-9D4EDD?style=flat-square&labelColor=1a1a2e)](LICENSE)
@@ -143,20 +143,44 @@ TaskFlow/
 ├── Sources/
 │   ├── TaskFlow/           # Main app entry point
 │   └── TaskFlowLib/        # Core library
-│       ├── Models/         # Data models
+│       ├── Models/         # Data models (TFM-prefixed)
 │       ├── Views/          # SwiftUI views
-│       ├── Services/       # Business logic
-│       └── Persistence/    # Database layer
+│       ├── Services/       # Business logic (TFM-prefixed)
+│       ├── Persistence/    # Database layer (TFM-prefixed)
+│       └── Testing/        # Documentation tests
 ├── Tests/                  # Unit & property tests
 ├── Resources/              # App icons & assets
 └── Installer/              # DMG creation scripts
 ```
 
+> **Note:** All public types use the `TFM` prefix (TaskFlowMac) to avoid naming conflicts with TaskFlowTurbo. See [NAMING_CONVENTIONS.md](../NAMING_CONVENTIONS.md) for details.
+
+---
+
+## 📛 Naming Conventions
+
+TaskFlowMac uses the `TFM` prefix for types that have counterparts in TaskFlowTurbo. This allows both projects to coexist in the same workspace.
+
+| Type | Prefixed Name |
+|:-----|:--------------|
+| Task | TFMTask |
+| TaskManager | TFMTaskManager |
+| SettingsManager | TFMSettingsManager |
+| CalendarEvent | TFMCalendarEvent |
+
+For the complete naming convention guide, see [NAMING_CONVENTIONS.md](../NAMING_CONVENTIONS.md).
+
 ---
 
 ## 📜 Version History
 
-### v1.2.0 (Current)
+### v1.3.0 (Current)
+- 🏷️ **TFM Prefix Refactoring** — All public types now use TFM prefix for workspace compatibility
+- 🔧 **Code Architecture** — Improved service and persistence layer organization
+- 📝 **Documentation Tests** — Added documentation completeness verification
+- 🐛 **Bug Fixes** — Various stability improvements
+
+### v1.2.0
 - ✨ **Annual Calendar** — Full year planning with colored events
 - 🎨 **10 Cyberpunk Categories** — Customizable event colors
 - 🖱️ **Drag-to-Move** — Reschedule events by dragging

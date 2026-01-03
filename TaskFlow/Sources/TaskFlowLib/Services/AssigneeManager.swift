@@ -1,9 +1,9 @@
 import Foundation
 
 /// Manages assignee names with persistence and autocomplete
-public final class AssigneeManager: ObservableObject {
+public final class TFMAssigneeManager: ObservableObject {
     
-    public static let shared = AssigneeManager()
+    public static let shared = TFMAssigneeManager()
     
     private let defaults = UserDefaults.standard
     private let key = "savedAssigneeNames"
@@ -50,3 +50,8 @@ public final class AssigneeManager: ObservableObject {
         defaults.set(savedAssignees, forKey: key)
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMAssigneeManager")
+public typealias AssigneeManager = TFMAssigneeManager

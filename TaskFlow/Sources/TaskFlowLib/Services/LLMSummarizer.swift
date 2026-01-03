@@ -1,7 +1,7 @@
 import Foundation
 
 /// Result of LLM summarization
-public struct LLMSummaryResult {
+public struct TFMLLMSummaryResult {
     public let title: String
     public let wasGenerated: Bool  // true if LLM generated, false if fallback
     
@@ -12,18 +12,18 @@ public struct LLMSummaryResult {
 }
 
 /// Protocol for LLM summarization operations
-public protocol LLMSummarizerProtocol {
+public protocol TFMLLMSummarizerProtocol {
     var isAvailable: Bool { get async }
-    func summarizeForTitle(text: String) async -> LLMSummaryResult
+    func summarizeForTitle(text: String) async -> TFMLLMSummaryResult
     func warmup() async
 }
 
 /// LLM-powered task title generation using local Ollama
 /// Per Requirements 2B.1, 2B.2, 2B.3
-public final class LLMSummarizer: LLMSummarizerProtocol {
+public final class TFMLLMSummarizer: TFMLLMSummarizerProtocol {
     
-    private let client: OllamaClient
-    private let settingsManager: SettingsManager
+    private let client: TFMOllamaClient
+    private let settingsManager: TFMSettingsManager
     private var cachedAvailability: Bool?
     private var availableModels: [String] = []
     private var isWarmedUp = false
@@ -45,7 +45,7 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
         "top_p": 0.9,           // Nucleus sampling
     ]
     
-    public init(client: OllamaClient = OllamaClient(), settingsManager: SettingsManager = .shared) {
+    public init(client: TFMOllamaClient = TFMOllamaClient(), settingsManager: TFMSettingsManager = .shared) {
         self.client = client
         self.settingsManager = settingsManager
     }
@@ -73,14 +73,14 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
         // Refresh available models list
         availableModels = await client.listModels()
         settingsManager.updateAvailableModels(availableModels)
-        print("LLMSummarizer: Available models: \(availableModels)")
+        print("TFMLLMSummarizer: Available models: \(availableModels)")
         
         guard let model = selectModel() else { return }
         
-        print("LLMSummarizer: Warming up model \(model)...")
+        print("TFMLLMSummarizer: Warming up model \(model)...")
         let success = await client.warmupModel(model)
         isWarmedUp = success
-        print("LLMSummarizer: Warmup \(success ? "complete" : "failed")")
+        print("TFMLLMSummarizer: Warmup \(success ? "complete" : "failed")")
     }
     
     /// Refresh the list of available models from Ollama
@@ -92,28 +92,28 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
     
     /// Summarize text into a task title
     /// Falls back to first line of text if Ollama unavailable
-    public func summarizeForTitle(text: String) async -> LLMSummaryResult {
+    public func summarizeForTitle(text: String) async -> TFMLLMSummaryResult {
         let startTime = Date()
         
         // Check availability
         guard await isAvailable else {
-            print("LLMSummarizer: Ollama not available, using fallback")
+            print("TFMLLMSummarizer: Ollama not available, using fallback")
             return fallbackTitle(from: text)
         }
         
         // Get available models if not cached
         if availableModels.isEmpty {
             availableModels = await client.listModels()
-            print("LLMSummarizer: Available models: \(availableModels)")
+            print("TFMLLMSummarizer: Available models: \(availableModels)")
         }
         
         // Find best available model
         guard let model = selectModel() else {
-            print("LLMSummarizer: No suitable model found, using fallback")
+            print("TFMLLMSummarizer: No suitable model found, using fallback")
             return fallbackTitle(from: text)
         }
         
-        print("LLMSummarizer: Using model \(model)")
+        print("TFMLLMSummarizer: Using model \(model)")
         
         // Generate title using LLM with performance options
         let prompt = buildPrompt(for: text)
@@ -127,15 +127,15 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
             let title = cleanTitle(response)
             
             let elapsed = Date().timeIntervalSince(startTime)
-            print("LLMSummarizer: Generated title in \(String(format: "%.2f", elapsed))s")
+            print("TFMLLMSummarizer: Generated title in \(String(format: "%.2f", elapsed))s")
             
             if title.isEmpty {
                 return fallbackTitle(from: text)
             }
             
-            return LLMSummaryResult(title: title, wasGenerated: true)
+            return TFMLLMSummaryResult(title: title, wasGenerated: true)
         } catch {
-            print("LLMSummarizer: Generation error - \(error)")
+            print("TFMLLMSummarizer: Generation error - \(error)")
             return fallbackTitle(from: text)
         }
     }
@@ -242,7 +242,7 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
             
             return description.isEmpty ? generateFallbackDescription(from: text) : description
         } catch {
-            print("LLMSummarizer: Description generation error - \(error)")
+            print("TFMLLMSummarizer: Description generation error - \(error)")
             return generateFallbackDescription(from: text)
         }
     }
@@ -293,7 +293,7 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
     }
     
     /// Generate fallback title from text
-    private func fallbackTitle(from text: String) -> LLMSummaryResult {
+    private func fallbackTitle(from text: String) -> TFMLLMSummaryResult {
         let lines = text.components(separatedBy: .newlines)
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
@@ -305,7 +305,7 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
             title = String(title.prefix(57)) + "..."
         }
         
-        return LLMSummaryResult(title: title, wasGenerated: false)
+        return TFMLLMSummaryResult(title: title, wasGenerated: false)
     }
     
     // MARK: - Email Summarization
@@ -314,13 +314,13 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
     
     /// Summarize email for task title
     /// Focuses on action items and key requests
-    public func summarizeEmailForTitle(_ email: ProcessedEmail) async -> LLMSummaryResult {
+    public func summarizeEmailForTitle(_ email: TFMProcessedEmail) async -> TFMLLMSummaryResult {
         let startTime = Date()
         
         // Check availability
         guard await isAvailable else {
-            print("LLMSummarizer: Ollama not available, using email subject as fallback")
-            return LLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
+            print("TFMLLMSummarizer: Ollama not available, using email subject as fallback")
+            return TFMLLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
         }
         
         // Get available models if not cached
@@ -329,7 +329,7 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
         }
         
         guard let model = selectModel() else {
-            return LLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
+            return TFMLLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
         }
         
         // Prepare email content with truncation for long threads
@@ -360,22 +360,22 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
             let title = cleanTitle(response)
             
             let elapsed = Date().timeIntervalSince(startTime)
-            print("LLMSummarizer: Generated email title in \(String(format: "%.2f", elapsed))s")
+            print("TFMLLMSummarizer: Generated email title in \(String(format: "%.2f", elapsed))s")
             
             if title.isEmpty {
-                return LLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
+                return TFMLLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
             }
             
-            return LLMSummaryResult(title: title, wasGenerated: true)
+            return TFMLLMSummaryResult(title: title, wasGenerated: true)
         } catch {
-            print("LLMSummarizer: Email title generation error - \(error)")
-            return LLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
+            print("TFMLLMSummarizer: Email title generation error - \(error)")
+            return TFMLLMSummaryResult(title: email.metadata.subject, wasGenerated: false)
         }
     }
     
     /// Summarize email for task description
     /// Extracts key points and action items
-    public func summarizeEmailForDescription(_ email: ProcessedEmail) async -> String {
+    public func summarizeEmailForDescription(_ email: TFMProcessedEmail) async -> String {
         // Check availability
         guard await isAvailable else {
             return generateFallbackEmailDescription(email)
@@ -429,14 +429,14 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
             
             return description.isEmpty ? generateFallbackEmailDescription(email) : description
         } catch {
-            print("LLMSummarizer: Email description generation error - \(error)")
+            print("TFMLLMSummarizer: Email description generation error - \(error)")
             return generateFallbackEmailDescription(email)
         }
     }
     
     /// Prepare email content for LLM with truncation for long threads
     /// Per Requirement 6.5 - truncates oldest messages when exceeding limit
-    private func prepareEmailContentForLLM(_ email: ProcessedEmail) -> String {
+    private func prepareEmailContentForLLM(_ email: TFMProcessedEmail) -> String {
         let maxTokenEstimate = 1500  // Approximate token limit for context
         let avgCharsPerToken = 4
         let maxChars = maxTokenEstimate * avgCharsPerToken
@@ -473,7 +473,7 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
     }
     
     /// Generate fallback description for email
-    private func generateFallbackEmailDescription(_ email: ProcessedEmail) -> String {
+    private func generateFallbackEmailDescription(_ email: TFMProcessedEmail) -> String {
         var description = "Email from \(email.metadata.sender)"
         
         if !email.metadata.recipients.isEmpty {
@@ -495,3 +495,15 @@ public final class LLMSummarizer: LLMSummarizerProtocol {
         return description
     }
 }
+
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMLLMSummaryResult")
+public typealias LLMSummaryResult = TFMLLMSummaryResult
+
+@available(*, deprecated, renamed: "TFMLLMSummarizerProtocol")
+public typealias LLMSummarizerProtocol = TFMLLMSummarizerProtocol
+
+@available(*, deprecated, renamed: "TFMLLMSummarizer")
+public typealias LLMSummarizer = TFMLLMSummarizer

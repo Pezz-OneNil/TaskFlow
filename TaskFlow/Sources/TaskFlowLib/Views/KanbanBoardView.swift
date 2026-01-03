@@ -6,13 +6,13 @@ public struct KanbanBoardView: View {
     @ObservedObject var taskManager: TaskManager
     @ObservedObject private var selectionManager = SelectionManager.shared
     let searchQuery: String
-    let filterTasks: ([Task]) -> [Task]
-    let onMoveColumn: (Task, KanbanColumn) -> Void
-    let onMoveToActive: (Task) -> Void
-    let onComplete: (Task) -> Void
-    let onRestore: (Task) -> Void
-    let onPermanentDelete: (Task) -> Void
-    let onEdit: (Task) -> Void
+    let filterTasks: ([TFMTask]) -> [TFMTask]
+    let onMoveColumn: (TFMTask, TFMKanbanColumn) -> Void
+    let onMoveToActive: (TFMTask) -> Void
+    let onComplete: (TFMTask) -> Void
+    let onRestore: (TFMTask) -> Void
+    let onPermanentDelete: (TFMTask) -> Void
+    let onEdit: (TFMTask) -> Void
     let onStatusMessage: ((String) -> Void)?
     
     @State private var showingDeleteConfirmation = false
@@ -20,13 +20,13 @@ public struct KanbanBoardView: View {
     public init(
         taskManager: TaskManager,
         searchQuery: String = "",
-        filterTasks: @escaping ([Task]) -> [Task] = { $0 },
-        onMoveColumn: @escaping (Task, KanbanColumn) -> Void = { _, _ in },
-        onMoveToActive: @escaping (Task) -> Void = { _ in },
-        onComplete: @escaping (Task) -> Void = { _ in },
-        onRestore: @escaping (Task) -> Void = { _ in },
-        onPermanentDelete: @escaping (Task) -> Void = { _ in },
-        onEdit: @escaping (Task) -> Void = { _ in },
+        filterTasks: @escaping ([TFMTask]) -> [TFMTask] = { $0 },
+        onMoveColumn: @escaping (TFMTask, TFMKanbanColumn) -> Void = { _, _ in },
+        onMoveToActive: @escaping (TFMTask) -> Void = { _ in },
+        onComplete: @escaping (TFMTask) -> Void = { _ in },
+        onRestore: @escaping (TFMTask) -> Void = { _ in },
+        onPermanentDelete: @escaping (TFMTask) -> Void = { _ in },
+        onEdit: @escaping (TFMTask) -> Void = { _ in },
         onStatusMessage: ((String) -> Void)? = nil
     ) {
         self.taskManager = taskManager
@@ -96,13 +96,13 @@ public struct KanbanBoardView: View {
             
             // Columns - use GeometryReader for equal width distribution
             GeometryReader { geometry in
-                let columnCount = CGFloat(KanbanColumn.allCases.count)
+                let columnCount = CGFloat(TFMKanbanColumn.allCases.count)
                 let totalSpacing = CyberpunkTheme.spacingM * (columnCount - 1) + CyberpunkTheme.spacingM * 2 // spacing between + padding
                 let availableWidth = geometry.size.width - totalSpacing
                 let columnWidth = max(140, availableWidth / columnCount) // Minimum 140px per column
                 
                 HStack(alignment: .top, spacing: CyberpunkTheme.spacingM) {
-                    ForEach(KanbanColumn.allCases, id: \.self) { column in
+                    ForEach(TFMKanbanColumn.allCases, id: \.self) { column in
                         KanbanColumnView(
                             column: column,
                             tasks: tasksForColumn(column),
@@ -154,7 +154,7 @@ public struct KanbanBoardView: View {
         }
     }
     
-    private func tasksForColumn(_ column: KanbanColumn) -> [Task] {
+    private func tasksForColumn(_ column: TFMKanbanColumn) -> [TFMTask] {
         let columnTasks = taskManager.getAllKanbanTasks().filter { $0.kanbanColumn == column }
         return filterTasks(columnTasks)
     }
@@ -185,28 +185,28 @@ public struct KanbanBoardView: View {
 /// Individual Kanban column
 /// Per Requirements 5.5, 5.9, 5.10
 public struct KanbanColumnView: View {
-    let column: KanbanColumn
-    let tasks: [Task]
+    let column: TFMKanbanColumn
+    let tasks: [TFMTask]
     let taskManager: TaskManager
-    let onMoveColumn: (Task, KanbanColumn) -> Void
-    let onMoveToActive: (Task) -> Void
-    let onComplete: (Task) -> Void
-    let onRestore: (Task) -> Void
-    let onPermanentDelete: (Task) -> Void
-    let onEdit: (Task) -> Void
+    let onMoveColumn: (TFMTask, TFMKanbanColumn) -> Void
+    let onMoveToActive: (TFMTask) -> Void
+    let onComplete: (TFMTask) -> Void
+    let onRestore: (TFMTask) -> Void
+    let onPermanentDelete: (TFMTask) -> Void
+    let onEdit: (TFMTask) -> Void
     
     @State private var isTargeted = false
     
     public init(
-        column: KanbanColumn,
-        tasks: [Task],
+        column: TFMKanbanColumn,
+        tasks: [TFMTask],
         taskManager: TaskManager,
-        onMoveColumn: @escaping (Task, KanbanColumn) -> Void,
-        onMoveToActive: @escaping (Task) -> Void,
-        onComplete: @escaping (Task) -> Void,
-        onRestore: @escaping (Task) -> Void = { _ in },
-        onPermanentDelete: @escaping (Task) -> Void = { _ in },
-        onEdit: @escaping (Task) -> Void = { _ in }
+        onMoveColumn: @escaping (TFMTask, TFMKanbanColumn) -> Void,
+        onMoveToActive: @escaping (TFMTask) -> Void,
+        onComplete: @escaping (TFMTask) -> Void,
+        onRestore: @escaping (TFMTask) -> Void = { _ in },
+        onPermanentDelete: @escaping (TFMTask) -> Void = { _ in },
+        onEdit: @escaping (TFMTask) -> Void = { _ in }
     ) {
         self.column = column
         self.tasks = tasks
@@ -300,11 +300,11 @@ public struct KanbanColumnView: View {
 /// Task card for Kanban board with multi-select support
 /// Per Requirements 1.1-1.4, 5.11
 public struct KanbanTaskCard: View {
-    let task: Task
-    let onMoveColumn: (Task, KanbanColumn) -> Void
-    let onMoveToActive: (Task) -> Void
-    let onComplete: (Task) -> Void
-    let onEdit: (Task) -> Void
+    let task: TFMTask
+    let onMoveColumn: (TFMTask, TFMKanbanColumn) -> Void
+    let onMoveToActive: (TFMTask) -> Void
+    let onComplete: (TFMTask) -> Void
+    let onEdit: (TFMTask) -> Void
     
     @ObservedObject private var selectionManager = SelectionManager.shared
     @State private var isHovered = false
@@ -316,11 +316,11 @@ public struct KanbanTaskCard: View {
     }
     
     public init(
-        task: Task,
-        onMoveColumn: @escaping (Task, KanbanColumn) -> Void,
-        onMoveToActive: @escaping (Task) -> Void,
-        onComplete: @escaping (Task) -> Void,
-        onEdit: @escaping (Task) -> Void = { _ in }
+        task: TFMTask,
+        onMoveColumn: @escaping (TFMTask, TFMKanbanColumn) -> Void,
+        onMoveToActive: @escaping (TFMTask) -> Void,
+        onComplete: @escaping (TFMTask) -> Void,
+        onEdit: @escaping (TFMTask) -> Void = { _ in }
     ) {
         self.task = task
         self.onMoveColumn = onMoveColumn
@@ -445,7 +445,7 @@ public struct KanbanTaskCard: View {
             
             Divider()
             
-            ForEach(KanbanColumn.allCases, id: \.self) { column in
+            ForEach(TFMKanbanColumn.allCases, id: \.self) { column in
                 if column != task.kanbanColumn {
                     Button("Move to \(column.displayName)") {
                         onMoveColumn(task, column)
@@ -491,9 +491,9 @@ public struct EmptyKanbanView: View {
 /// Task card for Deleted column with restore/permanent delete actions and multi-select support
 /// Per Requirements 1.6, 5.7
 public struct DeletedTaskCard: View {
-    let task: Task
-    let onRestore: (Task) -> Void
-    let onPermanentDelete: (Task) -> Void
+    let task: TFMTask
+    let onRestore: (TFMTask) -> Void
+    let onPermanentDelete: (TFMTask) -> Void
     
     @ObservedObject private var selectionManager = SelectionManager.shared
     @State private var isHovered = false
@@ -505,9 +505,9 @@ public struct DeletedTaskCard: View {
     }
     
     public init(
-        task: Task,
-        onRestore: @escaping (Task) -> Void,
-        onPermanentDelete: @escaping (Task) -> Void
+        task: TFMTask,
+        onRestore: @escaping (TFMTask) -> Void,
+        onPermanentDelete: @escaping (TFMTask) -> Void
     ) {
         self.task = task
         self.onRestore = onRestore

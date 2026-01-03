@@ -8,9 +8,9 @@ import Foundation
 /// Handles incoming URL scheme requests for TaskFlow
 /// Feature: multi-select-outlook-integration
 /// Per Requirements 4.4, 9.1, 9.2
-public final class URLSchemeHandler: ObservableObject {
+public final class TFMURLSchemeHandler: ObservableObject {
     
-    public static let shared = URLSchemeHandler()
+    public static let shared = TFMURLSchemeHandler()
     
     /// URL scheme for TaskFlow
     public static let scheme = "taskflow"
@@ -23,10 +23,10 @@ public final class URLSchemeHandler: ObservableObject {
     private static let maxRecipients = 200
     
     /// Callback when email capture is received
-    public var onEmailCaptureReceived: ((EmailCapture) -> Void)?
+    public var onEmailCaptureReceived: ((TFMEmailCapture) -> Void)?
     
     /// Published property to trigger UI updates when email is received
-    @Published public var pendingEmailCapture: EmailCapture?
+    @Published public var pendingEmailCapture: TFMEmailCapture?
     
     private init() {}
     
@@ -100,14 +100,14 @@ public final class URLSchemeHandler: ObservableObject {
         do {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
-            let emailData = try decoder.decode(EmailCaptureData.self, from: data)
+            let emailData = try decoder.decode(TFMEmailCaptureData.self, from: data)
             guard validateEmailData(emailData) else {
                 print("URLSchemeHandler: Email data failed validation")
                 return false
             }
             
-            // Convert to EmailCapture
-            let capture = EmailCapture(
+            // Convert to TFMEmailCapture
+            let capture = TFMEmailCapture(
                 subject: emailData.subject,
                 sender: emailData.sender,
                 recipients: emailData.recipients,
@@ -131,7 +131,7 @@ public final class URLSchemeHandler: ObservableObject {
         }
     }
 
-    private func validateEmailData(_ data: EmailCaptureData) -> Bool {
+    private func validateEmailData(_ data: TFMEmailCaptureData) -> Bool {
         let subject = data.subject.trimmingCharacters(in: .whitespacesAndNewlines)
         let sender = data.sender.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -167,7 +167,7 @@ public final class URLSchemeHandler: ObservableObject {
 // MARK: - Data Models
 
 /// Raw email data from Outlook add-in
-private struct EmailCaptureData: Codable {
+private struct TFMEmailCaptureData: Codable {
     let subject: String
     let sender: String
     let recipients: [String]
@@ -178,7 +178,7 @@ private struct EmailCaptureData: Codable {
 
 /// Processed email capture for task creation
 /// Feature: multi-select-outlook-integration
-public struct EmailCapture: Identifiable, Equatable {
+public struct TFMEmailCapture: Identifiable, Equatable {
     public let id = UUID()
     public let subject: String
     public let sender: String
@@ -216,3 +216,11 @@ public struct EmailCapture: Identifiable, Equatable {
         recipients.joined(separator: ", ")
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMEmailCapture")
+public typealias EmailCapture = TFMEmailCapture
+
+@available(*, deprecated, renamed: "TFMURLSchemeHandler")
+public typealias URLSchemeHandler = TFMURLSchemeHandler

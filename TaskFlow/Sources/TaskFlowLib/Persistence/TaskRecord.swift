@@ -2,7 +2,7 @@ import Foundation
 import GRDB
 
 /// GRDB record for Task persistence
-struct TaskRecord: Codable, FetchableRecord, PersistableRecord {
+struct TFMTaskRecord: Codable, FetchableRecord, PersistableRecord {
     static let databaseTableName = "tasks"
     
     var id: String
@@ -35,8 +35,8 @@ struct TaskRecord: Codable, FetchableRecord, PersistableRecord {
         case updatedAt = "updated_at"
     }
     
-    /// Convert from domain Task model
-    init(from task: Task) {
+    /// Convert from domain TFMTask model
+    init(from task: TFMTask) {
         self.id = task.id.uuidString
         self.title = task.title
         self.description = task.description.isEmpty ? nil : task.description
@@ -52,22 +52,22 @@ struct TaskRecord: Codable, FetchableRecord, PersistableRecord {
         self.updatedAt = ISO8601DateFormatter().string(from: task.updatedAt)
     }
     
-    /// Convert to domain Task model (requires metadata)
-    func toTask(with metadata: TaskMetadataRecord?) -> Task? {
+    /// Convert to domain TFMTask model (requires metadata)
+    func toTask(with metadata: TFMTaskMetadataRecord?) -> TFMTask? {
         guard let uuid = UUID(uuidString: id),
-              let timeEst = TimeEstimate(rawValue: timeEstimate),
-              let prio = Priority(rawValue: priority),
-              let stat = TaskStatus(rawValue: status),
+              let timeEst = TFMTimeEstimate(rawValue: timeEstimate),
+              let prio = TFMPriority(rawValue: priority),
+              let stat = TFMTaskStatus(rawValue: status),
               let created = ISO8601DateFormatter().date(from: createdAt),
               let updated = ISO8601DateFormatter().date(from: updatedAt) else {
             return nil
         }
         
-        let kanban = kanbanColumn.flatMap { KanbanColumn(rawValue: $0) }
-        let taskMetadata = metadata?.toTaskMetadata() ?? TaskMetadata()
+        let kanban = kanbanColumn.flatMap { TFMKanbanColumn(rawValue: $0) }
+        let taskMetadata = metadata?.toTaskMetadata() ?? TFMTaskMetadata()
         let ssId = screenshotId.flatMap { UUID(uuidString: $0) }
         
-        return Task(
+        return TFMTask(
             id: uuid,
             title: title,
             description: description ?? "",
@@ -87,7 +87,7 @@ struct TaskRecord: Codable, FetchableRecord, PersistableRecord {
 }
 
 /// GRDB record for TaskMetadata persistence
-struct TaskMetadataRecord: Codable, FetchableRecord, PersistableRecord {
+struct TFMTaskMetadataRecord: Codable, FetchableRecord, PersistableRecord {
     static let databaseTableName = "task_metadata"
     
     var taskId: String
@@ -110,8 +110,8 @@ struct TaskMetadataRecord: Codable, FetchableRecord, PersistableRecord {
         case llmGeneratedTitle = "llm_generated_title"
     }
     
-    /// Convert from domain TaskMetadata model
-    init(taskId: UUID, from metadata: TaskMetadata) {
+    /// Convert from domain TFMTaskMetadata model
+    init(taskId: UUID, from metadata: TFMTaskMetadata) {
         self.taskId = taskId.uuidString
         self.sender = metadata.sender
         self.recipient = metadata.recipient
@@ -128,8 +128,8 @@ struct TaskMetadataRecord: Codable, FetchableRecord, PersistableRecord {
         }
     }
     
-    /// Convert to domain TaskMetadata model
-    func toTaskMetadata() -> TaskMetadata {
+    /// Convert to domain TFMTaskMetadata model
+    func toTaskMetadata() -> TFMTaskMetadata {
         let capturedDate = capturedAt.flatMap { ISO8601DateFormatter().date(from: $0) }
         
         // Decode keywords from JSON
@@ -140,7 +140,7 @@ struct TaskMetadataRecord: Codable, FetchableRecord, PersistableRecord {
             keywordList = decoded
         }
         
-        return TaskMetadata(
+        return TFMTaskMetadata(
             sender: sender,
             recipient: recipient,
             subject: subject,
@@ -153,7 +153,7 @@ struct TaskMetadataRecord: Codable, FetchableRecord, PersistableRecord {
 }
 
 /// GRDB record for Screenshot persistence
-public struct ScreenshotRecord: Codable, FetchableRecord, PersistableRecord {
+public struct TFMScreenshotRecord: Codable, FetchableRecord, PersistableRecord {
     public static let databaseTableName = "screenshots"
     
     public var id: String
@@ -178,3 +178,15 @@ public struct ScreenshotRecord: Codable, FetchableRecord, PersistableRecord {
         self.originalHeight = height
     }
 }
+
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMTaskRecord")
+typealias TaskRecord = TFMTaskRecord
+
+@available(*, deprecated, renamed: "TFMTaskMetadataRecord")
+typealias TaskMetadataRecord = TFMTaskMetadataRecord
+
+@available(*, deprecated, renamed: "TFMScreenshotRecord")
+public typealias ScreenshotRecord = TFMScreenshotRecord

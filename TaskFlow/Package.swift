@@ -25,7 +25,8 @@ let package = Package(
         .executableTarget(
             name: "TaskFlow",
             dependencies: ["TaskFlowLib"],
-            path: "Sources/TaskFlow"
+            path: "Sources/TaskFlow",
+            exclude: ["Info.plist"]
         ),
         .executableTarget(
             name: "TestRunner",

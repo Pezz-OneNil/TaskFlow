@@ -3,7 +3,7 @@ import SwiftUI
 
 /// State of the status bar
 /// Per Requirement 9
-public enum StatusBarState: Equatable {
+public enum TFMStatusBarState: Equatable {
     case idle
     case processing(message: String)
     case success(message: String)
@@ -46,8 +46,8 @@ public enum StatusBarState: Equatable {
 }
 
 /// Protocol for status bar management
-public protocol StatusBarManagerProtocol: ObservableObject {
-    var currentState: StatusBarState { get }
+public protocol TFMStatusBarManagerProtocol: ObservableObject {
+    var currentState: TFMStatusBarState { get }
     
     func setProcessing(_ message: String)
     func setSuccess(_ message: String)
@@ -59,8 +59,8 @@ public protocol StatusBarManagerProtocol: ObservableObject {
 
 /// Manager for the status bar state
 /// Per Requirement 9.1, 9.7, 9.10
-public final class StatusBarManager: ObservableObject, StatusBarManagerProtocol {
-    @Published public private(set) var currentState: StatusBarState = .idle
+public final class TFMStatusBarManager: ObservableObject, TFMStatusBarManagerProtocol {
+    @Published public private(set) var currentState: TFMStatusBarState = .idle
     
     private var clearTask: _Concurrency.Task<Void, Never>?
     
@@ -123,3 +123,15 @@ public final class StatusBarManager: ObservableObject, StatusBarManagerProtocol 
         }
     }
 }
+
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMStatusBarState")
+public typealias StatusBarState = TFMStatusBarState
+
+@available(*, deprecated, renamed: "TFMStatusBarManagerProtocol")
+public typealias StatusBarManagerProtocol = TFMStatusBarManagerProtocol
+
+@available(*, deprecated, renamed: "TFMStatusBarManager")
+public typealias StatusBarManager = TFMStatusBarManager

@@ -2,27 +2,27 @@ import Foundation
 import GRDB
 
 /// Protocol for persistence operations
-public protocol PersistenceManagerProtocol {
-    func save(_ task: Task) throws
-    func save(_ tasks: [Task]) throws
-    func loadAllTasks() throws -> [Task]
+public protocol TFMPersistenceManagerProtocol {
+    func save(_ task: TFMTask) throws
+    func save(_ tasks: [TFMTask]) throws
+    func loadAllTasks() throws -> [TFMTask]
     func delete(taskId: UUID) throws
     func createBackup() throws
-    func restoreFromBackup() throws -> [Task]
+    func restoreFromBackup() throws -> [TFMTask]
 }
 
 /// Manages task persistence with immediate writes and retry logic
-public final class PersistenceManager: PersistenceManagerProtocol {
+public final class TFMPersistenceManager: TFMPersistenceManagerProtocol {
     
-    private let databaseManager: DatabaseManager
+    private let databaseManager: TFMDatabaseManager
     private let maxRetries = 3
     
-    public init(databaseManager: DatabaseManager = .shared) {
+    public init(databaseManager: TFMDatabaseManager = .shared) {
         self.databaseManager = databaseManager
     }
     
     /// Save a single task with immediate persistence
-    public func save(_ task: Task) throws {
+    public func save(_ task: TFMTask) throws {
         try withRetry {
             let pool = try self.databaseManager.getPool()
             try pool.write { db in
@@ -32,7 +32,7 @@ public final class PersistenceManager: PersistenceManagerProtocol {
     }
     
     /// Save multiple tasks with immediate persistence
-    public func save(_ tasks: [Task]) throws {
+    public func save(_ tasks: [TFMTask]) throws {
         try withRetry {
             let pool = try self.databaseManager.getPool()
             try pool.write { db in
@@ -44,14 +44,14 @@ public final class PersistenceManager: PersistenceManagerProtocol {
     }
     
     /// Load all tasks from database
-    public func loadAllTasks() throws -> [Task] {
+    public func loadAllTasks() throws -> [TFMTask] {
         let pool = try databaseManager.getPool()
         
         return try pool.read { db in
-            let taskRecords = try TaskRecord.fetchAll(db)
+            let taskRecords = try TFMTaskRecord.fetchAll(db)
             
-            return try taskRecords.compactMap { taskRecord -> Task? in
-                let metadataRecord = try TaskMetadataRecord
+            return try taskRecords.compactMap { taskRecord -> TFMTask? in
+                let metadataRecord = try TFMTaskMetadataRecord
                     .filter(Column("task_id") == taskRecord.id)
                     .fetchOne(db)
                 return taskRecord.toTask(with: metadataRecord)
@@ -65,7 +65,7 @@ public final class PersistenceManager: PersistenceManagerProtocol {
             let pool = try self.databaseManager.getPool()
             _ = try pool.write { db in
                 // Metadata is deleted automatically via CASCADE
-                try TaskRecord
+                try TFMTaskRecord
                     .filter(Column("id") == taskId.uuidString)
                     .deleteAll(db)
             }
@@ -80,7 +80,7 @@ public final class PersistenceManager: PersistenceManagerProtocol {
     }
     
     /// Restore from backup (delegates to BackupManager)
-    public func restoreFromBackup() throws -> [Task] {
+    public func restoreFromBackup() throws -> [TFMTask] {
         // This will be implemented by BackupManager
         return try loadAllTasks()
     }
@@ -88,11 +88,11 @@ public final class PersistenceManager: PersistenceManagerProtocol {
     // MARK: - Private Helpers
     
     /// Save task and metadata in a single transaction
-    private func saveTask(_ task: Task, in db: Database) throws {
-        let taskRecord = TaskRecord(from: task)
+    private func saveTask(_ task: TFMTask, in db: Database) throws {
+        let taskRecord = TFMTaskRecord(from: task)
         try taskRecord.save(db)
         
-        let metadataRecord = TaskMetadataRecord(taskId: task.id, from: task.metadata)
+        let metadataRecord = TFMTaskMetadataRecord(taskId: task.id, from: task.metadata)
         try metadataRecord.save(db)
     }
     
@@ -118,3 +118,11 @@ public final class PersistenceManager: PersistenceManagerProtocol {
         }
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMPersistenceManagerProtocol")
+public typealias PersistenceManagerProtocol = TFMPersistenceManagerProtocol
+
+@available(*, deprecated, renamed: "TFMPersistenceManager")
+public typealias PersistenceManager = TFMPersistenceManager

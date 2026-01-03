@@ -9,13 +9,13 @@ import UniformTypeIdentifiers
 
 /// State of the drop handler
 /// Per Requirements 1.1, 1.2
-public enum DropState: Equatable {
+public enum TFMDropState: Equatable {
     case idle
     case hovering(isValid: Bool)
     case processing
     case error(String)
     
-    public static func == (lhs: DropState, rhs: DropState) -> Bool {
+    public static func == (lhs: TFMDropState, rhs: TFMDropState) -> Bool {
         switch (lhs, rhs) {
         case (.idle, .idle): return true
         case (.hovering(let a), .hovering(let b)): return a == b
@@ -27,9 +27,9 @@ public enum DropState: Equatable {
 }
 
 /// Result of processing a dropped email file
-public struct EmailDropResult {
+public struct TFMEmailDropResult {
     public let fileURL: URL
-    public let parsedEmail: ParsedEmail?
+    public let parsedEmail: TFMParsedEmail?
     public let suggestedTitle: String?
     public let suggestedDescription: String?
     public let error: Error?
@@ -39,10 +39,10 @@ public struct EmailDropResult {
 
 /// Handles drag and drop events for email files
 /// Per Requirements 1.1-1.7
-public class EmailDropHandler: ObservableObject {
+public class TFMEmailDropHandler: ObservableObject {
     
     /// Current drop state for UI feedback
-    @Published public var dropState: DropState = .idle
+    @Published public var dropState: TFMDropState = .idle
     
     /// Files currently being processed
     @Published public var processingQueue: [URL] = []
@@ -51,21 +51,21 @@ public class EmailDropHandler: ObservableObject {
     @Published public var progress: Double = 0.0
     
     /// Results from the last drop operation
-    @Published public var lastResults: [EmailDropResult] = []
+    @Published public var lastResults: [TFMEmailDropResult] = []
     
     /// Settings manager for checking if email drop is enabled
-    private let settingsManager: SettingsManager
+    private let settingsManager: TFMSettingsManager
     
     /// EML parser instance
-    private let emlParser: EMLParser
+    private let emlParser: TFMEMLParser
     
     /// LLM summarizer for generating task titles/descriptions
-    private let llmSummarizer: LLMSummarizer?
+    private let llmSummarizer: TFMLLMSummarizer?
     
     public init(
-        settingsManager: SettingsManager = .shared,
-        emlParser: EMLParser = EMLParser(),
-        llmSummarizer: LLMSummarizer? = nil
+        settingsManager: TFMSettingsManager = .shared,
+        emlParser: TFMEMLParser = TFMEMLParser(),
+        llmSummarizer: TFMLLMSummarizer? = nil
     ) {
         self.settingsManager = settingsManager
         self.emlParser = emlParser
@@ -166,7 +166,7 @@ public class EmailDropHandler: ObservableObject {
         }
         
         // Process files
-        var results: [EmailDropResult] = []
+        var results: [TFMEmailDropResult] = []
         
         for (index, url) in fileURLs.enumerated() {
             let result = await processEMLFile(url)
@@ -234,7 +234,7 @@ public class EmailDropHandler: ObservableObject {
     
     /// Process a single .eml file
     /// Per Requirements 2.1-2.8
-    public func processEMLFile(_ url: URL) async -> EmailDropResult {
+    public func processEMLFile(_ url: URL) async -> TFMEmailDropResult {
         defer {
             cleanupTemporaryEmailFile(at: url)
         }
@@ -257,7 +257,7 @@ public class EmailDropHandler: ObservableObject {
                 suggestedDescription = extractFirstParagraph(from: parsedEmail.body)
             }
             
-            return EmailDropResult(
+            return TFMEmailDropResult(
                 fileURL: url,
                 parsedEmail: parsedEmail,
                 suggestedTitle: suggestedTitle,
@@ -265,8 +265,8 @@ public class EmailDropHandler: ObservableObject {
                 error: nil
             )
         } catch {
-            print("EmailDropHandler: Failed to process \(url.lastPathComponent): \(error)")
-            return EmailDropResult(
+            print("TFMEmailDropHandler: Failed to process \(url.lastPathComponent): \(error)")
+            return TFMEmailDropResult(
                 fileURL: url,
                 parsedEmail: nil,
                 suggestedTitle: nil,
@@ -308,10 +308,10 @@ public class EmailDropHandler: ObservableObject {
 
 // MARK: - Email Summarization Extension
 
-extension LLMSummarizer {
+extension TFMLLMSummarizer {
     /// Summarize an email for task creation
     /// Per Requirements 4.1, 4.2
-    public func summarizeEmail(_ email: ParsedEmail) async -> (title: String?, description: String?) {
+    public func summarizeEmail(_ email: TFMParsedEmail) async -> (title: String?, description: String?) {
         // Build a prompt from the email content
         let emailContent = """
         Subject: \(email.subject)
@@ -346,3 +346,14 @@ extension LLMSummarizer {
         return firstParagraph
     }
 }
+
+// MARK: - Backward Compatibility
+
+@available(*, deprecated, renamed: "TFMDropState")
+public typealias DropState = TFMDropState
+
+@available(*, deprecated, renamed: "TFMEmailDropResult")
+public typealias EmailDropResult = TFMEmailDropResult
+
+@available(*, deprecated, renamed: "TFMEmailDropHandler")
+public typealias EmailDropHandler = TFMEmailDropHandler

@@ -5,14 +5,14 @@ import SwiftUI
 public struct PomodoroTimerView: View {
     @ObservedObject var engine: PomodoroEngine
     let onStartSession: (TimeInterval) -> Void
-    let onEdit: (Task) -> Void
+    let onEdit: (TFMTask) -> Void
     
     @State private var selectedDuration: TimeInterval = 25 * 60 // 25 minutes default
     
     public init(
         engine: PomodoroEngine,
         onStartSession: @escaping (TimeInterval) -> Void = { _ in },
-        onEdit: @escaping (Task) -> Void = { _ in }
+        onEdit: @escaping (TFMTask) -> Void = { _ in }
     ) {
         self.engine = engine
         self.onStartSession = onStartSession
@@ -103,7 +103,7 @@ public struct PomodoroTimerView: View {
         }
     }
     
-    private func currentTaskCard(_ task: Task) -> some View {
+    private func currentTaskCard(_ task: TFMTask) -> some View {
         NeonCard(color: CyberpunkTheme.color(for: task.priority)) {
             VStack(alignment: .leading, spacing: CyberpunkTheme.spacingS) {
                 HStack {
