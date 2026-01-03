@@ -19,7 +19,7 @@ NC='\033[0m'
 # Configuration
 APP_NAME="TaskFlow"
 DMG_NAME="TaskFlow-Installer"
-VERSION="1.2.0"
+VERSION="1.3.0"
 COPYRIGHT="© 2025 Pezz. All rights reserved."
 VOLUME_NAME="TaskFlow Installer"
 
@@ -70,7 +70,7 @@ cat > "$DMG_TEMP/📖 Installation Guide.txt" << 'EOF'
        ██║   ██║  ██║███████║██║  ██╗██║     ███████╗╚██████╔╝╚███╔███╔╝
        ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝
 
-                        ✨ Version 1.2.0 ✨
+                        ✨ Version 1.3.0 ✨
                    © 2025 Pezz. All rights reserved.
 
     ═══════════════════════════════════════════════════════════════════

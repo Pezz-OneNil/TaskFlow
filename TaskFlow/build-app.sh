@@ -28,7 +28,7 @@
 
 set -e
 
-APP_VERSION="1.2.0"
+APP_VERSION="1.3.0"
 COPYRIGHT="© 2025 Pezz. All rights reserved."
 BUNDLE_ID="com.pezz.TaskFlow"
 
