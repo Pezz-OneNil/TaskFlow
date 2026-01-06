@@ -1,5 +1,5 @@
 ╔══════════════════════════════════════════════════════════════╗
-║                    TaskFlow v1.2.0                           ║
+║                    TaskFlow v1.3.0                           ║
 ║              © 2025 Pezz. All rights reserved.               ║
 ╚══════════════════════════════════════════════════════════════╝
 
@@ -146,7 +146,7 @@ Model not found
 
 COPYRIGHT & LICENSE:
 ━━━━━━━━━━━━━━━━━━━━
-TaskFlow v1.2.0
+TaskFlow v1.3.0
 © 2025 Pezz. All rights reserved.
 
 This software is protected by copyright law and international treaties.
